@@ -1,5 +1,16 @@
 # Réseautonome - Routeur offgrid
 
+## Sommaire
+* Paramétrage
+  * Fonctionnalités optionnelles du système
+  * Paramétrage pour l'algorithme
+  * Paramétrage minimum pour le fonctionnement du serveur web
+  * Paramétrage pour le fonctionnement MQTT
+* Flash sur ESP
+  * Via platformIO
+  * Via Arduino IDE
+* Développement
+
 
 ## Paramétrage
 ### Fonctionnalités optionnelles du système
@@ -65,7 +76,7 @@ https://github.com/VSCodium/vscodium/releases
 
 #### Plugin PlatformIO
 Depuis vscodium : 
-file -> préference -> extension, rechercher et installer platformIO ID
+file -> préference -> extension, rechercher et installer platformIO IDE
 
 #### Paramétrage 
 Modifier les informations dans le fichier platformio.ini
