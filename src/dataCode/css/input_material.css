@@ -1,0 +1,167 @@
+/* form starting stylings ------------------------------- */
+
+.group {
+    position: relative;
+    margin: 1em 1em 0.5em 1em;
+}
+
+input {
+    font-size: .9rem;
+    padding: .3em;
+    display: block;
+    width: calc(100% - .6em);
+    border: none;
+    border-bottom: 1px solid #757575;
+}
+
+input:focus {
+    outline: none;
+}
+
+/* LABEL ======================================= */
+
+.label-input-text {
+    color: #999;
+    font-size: .9rem;
+    font-weight: normal;
+    position: absolute;
+    pointer-events: none;
+    left: 5px;
+    top: 10px;
+    transition: .2s ease all;
+    -moz-transition: .2s ease all;
+    -webkit-transition: .2s ease all;
+    width: 100%;
+}
+
+/* active state */
+
+input:focus~label {
+    top: -11px;
+    font-size: 14px;
+    color: #5264AE;
+    left: 0px;
+}
+
+/* active state */
+
+input:valid~label {
+    top: -11px;
+    font-size: 14px;
+    color: #5264AE;
+    left: 0px;
+}
+
+/* active state */
+
+input:read-only~label {
+    top: -11px;
+    font-size: 14px;
+    color: #5264AE;
+    left: 0px;
+    background: rgb(220, 220, 220);
+}
+
+/* active state */
+
+input:-moz-read-only~label {
+    top: -11px;
+    font-size: 14px;
+    color: #5264AE;
+    left: 0px;
+    background: rgb(220, 220, 220);
+}
+
+input:read-only {
+    background: rgb(220, 220, 220);
+}
+
+input:-moz-read-only {
+    background: rgb(220, 220, 220);
+}
+
+/* BOTTOM BARS ================================= */
+
+.bar {
+    position: relative;
+    display: block;
+    width: 100%;
+}
+
+.bar:before, .bar:after {
+    content: '';
+    height: 2px;
+    width: 0;
+    bottom: 1px;
+    position: absolute;
+    background: #5264AE;
+    transition: .2s ease all;
+    -moz-transition: .2s ease all;
+    -webkit-transition: .2s ease all;
+}
+
+.bar:before {
+    left: 50%;
+}
+
+.bar:after {
+    right: 50%;
+}
+
+/* active state */
+
+input:focus~.bar:before, input:focus~.bar:after {
+    width: 50%;
+}
+
+/* HIGHLIGHTER ================================== */
+
+.highlight {
+    position: absolute;
+    height: 60%;
+    width: 100px;
+    top: 25%;
+    left: 0;
+    pointer-events: none;
+    opacity: .5;
+}
+
+/* active state */
+
+input:focus~.highlight {
+    -webkit-animation: inputHighlighter .3s ease;
+    -moz-animation: inputHighlighter .3s ease;
+    animation: inputHighlighter .3s ease;
+}
+
+/* ANIMATIONS ================ */
+
+@-webkit-keyframes inputHighlighter {
+    from {
+        background: #5264AE;
+    }
+    to {
+        width: 0;
+        background: transparent;
+    }
+}
+
+@-moz-keyframes inputHighlighter {
+    from {
+        background: #5264AE;
+    }
+    to {
+        width: 0;
+        background: transparent;
+    }
+}
+
+@keyframes inputHighlighter {
+    from {
+        background: #5264AE;
+    }
+    to {
+        width: 0;
+        background: transparent;
+    }
+}
