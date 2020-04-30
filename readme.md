@@ -44,7 +44,7 @@ Ils sont présent dans le fichier settings.h et si l'option ne vous interesse pa
 
 ### Paramétrage pour le fonctionnement MQTT
 | Champs      |    Fichier |  default |  description |
-| ------------- | :---------: |---------:|
+| ------------- | :---------: |---------:|---------:|
 | mqttServer  |   settings.h    | "192.168.1.28" | ip du serveur mqtt |
 | mqttPort  |   settings.h    |  1883 | port du serveur mqtt |
 | mqttUser  |   settings.h    |  "" | utilisateur mqtt si nécessaire |
@@ -59,7 +59,15 @@ Ils sont présent dans le fichier settings.h et si l'option ne vous interesse pa
 
 ## Flash sur ESP
 
-### PlateformIO
+### PlatformIO
+#### Installation VSCodium
+https://github.com/VSCodium/vscodium/releases
+
+#### Plugin PlatformIO
+Depuis vscodium : 
+file -> préference -> extension, rechercher et installer platformIO ID
+
+#### Paramétrage 
 Modifier les informations dans le fichier platformio.ini
 | Champs      |     default |  description |
 | ------------- |:---------:|---------:|
@@ -68,17 +76,44 @@ Modifier les informations dans le fichier platformio.ini
 |monitor_speed|115200|vitesse de lecture|
 |upload_port|COM3| port COM sur lequel est branché l'ESP|
 
+#### Serveur web dans le spiff
+Via l'onglet Plateformio qui est disponible sur la gauche de vscodium (la barre latérale, l'icone qui ressemble à une fourmi) :  
+Cliquer sur "Upload File System image"
+
+#### Application  
+Depuis la barre d'action rapide en base de VSCodium : cliquer sur la fleche "PlatformIO: Upload"
+
+#### Monitor
+Depuis la barre d'action rapide en base de VSCodium : cliquer sur la fleche "PlatformIO: Serial Monitor"
+
+Ceci permet de voir les infos et logs de l'ESP (Ip du serveur, mesures prises, publication mqtt ....)
+
+
 ### Arduino IDE
 #### Libraries nécessaires
-ArduinoJson
-OneWire
-DallasTemperature
-PubSubClient
-EspSoftwareSerial
-ESP8266_SSD1306
+ArduinoJson 
+OneWire 
+DallasTemperature 
+PubSubClient 
+EspSoftwareSerial 
+ESP8266_SSD1306 
 
-#### Flash
+
 Ouvrir le fichier src.ino
+
+#### Serveur web dans le spiff
+Il faut installer l'outil d'envoi de fichier système. 
+télécharger le zip présent ici : https://github.com/me-no-dev/arduino-esp32fs-plugin/releases/ 
+Extraire le zip dans le dossier 'tools' d'installation Arduino (C:\Program Files (x86)\Arduino\tools) 
+ce qui donnera C:\Program Files (x86)\Arduino\tools\ESP32FS\tool\esp32fs.jar
+
+Redémarrer Arduino IDE et cliquer sur Outils -> ESP32 Sketch Data Upload
+
+#### Application  
+Depuis la barre d'action rapide, en dessous des menus : cliquer sur la fleche "Téléverser"
+
+#### Monitor
+Depuis la barre d'action rapide, en dessous des menus, complétement à droiote : cliquer sur la loupe "Moniteur série"
 Appuyer sur le bouton "Téléverser"
 
 ## Développement
