@@ -7,7 +7,7 @@
 #define MesureTemperature // capteur DS18B20       installer librairie dallas temperature
 #define Pzem04t           // utilise un pzem004 pour la mesure de puissance dans le ballon
 #define Sortie2           // utilise un 2eme triac
-#define WifiMqtt          // mettre en commentaire si pas de réseau       installer librairie ArduinoJson et PubSubClient
+//#define WifiMqtt          // mettre en commentaire si pas de réseau       installer librairie ArduinoJson et PubSubClient
 #define WifiServer        // affiche les mesures dans une page html crée un point d'accès si pas de reseau
 #define EcranOled         // si pas d'écran oled      installer librairie heltec dev board
 //#define Bluetooth             // autorise les applications smartphone

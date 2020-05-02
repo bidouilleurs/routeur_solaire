@@ -7,7 +7,6 @@
 #include "triac.h"
 #include "prgEEprom.h"
 #include <string.h>
-
 #include <SPIFFS.h>
 
 int pause_inter = 0;
@@ -16,6 +15,8 @@ IPAddress local_ip(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
 bool restartEsp = false;
+int testconnect = 0; //  permet de savoir si la connection est faite
+
 DynamicJsonDocument RAServerClass::readSettingsFile()
 {
     File fileSettings = SPIFFS.open("/settings/settings.json", FILE_READ);
@@ -35,19 +36,24 @@ DynamicJsonDocument RAServerClass::readSettingsFile()
     return doc;
 }
 
+void RAServerClass::connexionSAP()
+{
+    const char *ssid = "routeur_esp32"; // mode point d'accès
+    const char *password = "adminesp32";
+    WiFi.enableAP(true);
+    delay(100);
+    WiFi.softAP(ssid, password); // l'esp devient serveur et se place à l'adresse 192.168.4.1
+    WiFi.softAPConfig(local_ip, gateway, subnet);
+    IPAddress myIP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(myIP);
+}
+
 void RAServerClass::setup()
 {
     if (SAP)
     {
-        const char *ssid = "routeur_esp32"; // mode point d'accès
-        const char *password = "adminesp32";
-        WiFi.enableAP(true);
-        delay(100);
-        WiFi.softAP(ssid, password); // l'esp devient serveur et se place à l'adresse 192.168.4.1
-        WiFi.softAPConfig(local_ip, gateway, subnet);
-        IPAddress myIP = WiFi.softAPIP();
-        Serial.print("AP IP address: ");
-        Serial.println(myIP);
+        connexionSAP();
     }
     else if (!MQTT)
     {
@@ -56,16 +62,25 @@ void RAServerClass::setup()
             WiFi.begin(routeur.ssid, routeur.password);
             Serial.println("Tentative de connexion...");
 
-            while (WiFi.status() != WL_CONNECTED)
+            while ((testconnect < 20) && (WiFi.status() != WL_CONNECTED))
             {
                 Serial.print(".");
-                delay(100);
+                delay(300);
+                testconnect++;
             }
-
-            Serial.println("\n");
-            Serial.println("Connexion etablie!");
-            Serial.print("Adresse IP: ");
-            Serial.println(WiFi.localIP());
+            if (testconnect < 20)
+            { // connection réussie
+                Serial.println("\n");
+                Serial.println("Connexion etablie!");
+                Serial.print("Adresse IP: ");
+                Serial.println(WiFi.localIP());
+            }
+            else
+            {
+                SAP = true;
+                 Serial.println("Erreur de connexion au Wifi, passage en mode SAP");
+                connexionSAP();
+            }
         }
     }
     if (!SPIFFS.begin())

@@ -21,6 +21,7 @@ private:
     void saveSystemSettings(String jsonResult);
     void getNewSettings(WiFiClient client);
     void getSettings(WiFiClient client);
+    void connexionSAP();
 };
 
 extern RAServerClass RAServer;
