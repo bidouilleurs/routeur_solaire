@@ -299,27 +299,27 @@ function updateSystemSettings() {
                     resultSaved = JSON.parse(sessionStorage.getItem("settings"));
                     const responseJson = JSON.parse(this.response);
 
-                    const intensiteBatterie = responseJson["intensiteBatterie"].toFixed(2);
+                    const intensiteBatterie = +(+responseJson["intensiteBatterie"]).toFixed(2);
 
-                    resultSaved["systemSettings"]["capteurTension"]["value"] = responseJson["capteurTension"];
+                    resultSaved["systemSettings"]["capteurTension"]["value"] = +responseJson["capteurTension"];
                     resultSaved["systemSettings"]["intensiteBatterie"]["value"] = intensiteBatterie;
-                    resultSaved["systemSettings"]["sortieActive"]["value"] = responseJson["sortieActive"];
-                    resultSaved["systemSettings"]["temperatureEauChaude"]["value"] = Math.round(responseJson["temperatureEauChaude"]);
-                    resultSaved["systemSettings"]["puissanceDeChauffe"]["value"] = Math.round(responseJson["puissanceDeChauffe"]);
-                    resultSaved["systemSettings"]["puissanceGradateur"]["value"] = responseJson["puissanceGradateur"];
-                    resultSaved["userSettings"]["temporisation"]["value"] = responseJson["temporisation"];
-                    resultSaved["userSettings"]["marcheForcee"]["value"] = responseJson["marcheForcee"];
-                    resultSaved["systemSettings"]["etatRelaisStatique"]["value"] = responseJson["etatRelaisStatique"];
+                    resultSaved["systemSettings"]["sortieActive"]["value"] = +responseJson["sortieActive"];
+                    resultSaved["systemSettings"]["temperatureEauChaude"]["value"] = Math.round(+responseJson["temperatureEauChaude"]);
+                    resultSaved["systemSettings"]["puissanceDeChauffe"]["value"] = Math.round(+responseJson["puissanceDeChauffe"]);
+                    resultSaved["systemSettings"]["puissanceGradateur"]["value"] = +responseJson["puissanceGradateur"];
+                    resultSaved["userSettings"]["temporisation"]["value"] = +responseJson["temporisation"];
+                    resultSaved["userSettings"]["marcheForcee"]["value"] = +responseJson["marcheForcee"];
+                    resultSaved["systemSettings"]["etatRelaisStatique"]["value"] = +responseJson["etatRelaisStatique"];
 
                     sessionStorage.setItem("settings", JSON.stringify(resultSaved));
                     if (document.getElementById('capteurTension')) {
-                        document.getElementById("capteurTension").value = responseJson["capteurTension"];
+                        document.getElementById("capteurTension").value = +responseJson["capteurTension"];
                         document.getElementById("intensiteBatterie").value = intensiteBatterie;
-                        document.getElementById("sortieActive").value = responseJson["sortieActive"];
-                        document.getElementById("temperatureEauChaude").value = Math.round(responseJson["temperatureEauChaude"]);
-                        document.getElementById("puissanceDeChauffe").value = Math.round(responseJson["puissanceDeChauffe"]);
-                        document.getElementById("puissanceGradateur").value = responseJson["puissanceGradateur"];
-                        document.getElementById("temporisation").value = responseJson["temporisation"];
+                        document.getElementById("sortieActive").value = +responseJson["sortieActive"];
+                        document.getElementById("temperatureEauChaude").value = Math.round(+responseJson["temperatureEauChaude"]);
+                        document.getElementById("puissanceDeChauffe").value = Math.round(+responseJson["puissanceDeChauffe"]);
+                        document.getElementById("puissanceGradateur").value = +responseJson["puissanceGradateur"];
+                        document.getElementById("temporisation").value = +responseJson["temporisation"];
                         document.getElementById("marcheForcee").value = responseJson["marcheForcee"];
                         const state = responseJson["etatRelaisStatique"] ? "Oui" : "Non";
                         document.getElementById("etatRelaisStatique").value = state;
