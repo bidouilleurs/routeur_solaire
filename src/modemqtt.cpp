@@ -8,7 +8,7 @@
 #include <ArduinoJson.h>
 #include <WiFiClient.h>
 #include <PubSubClient.h>
-#include <WiFi.h>
+#include "WiFi.h"
 /************ WiFi & MQTT objects  ******************/
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -17,6 +17,8 @@ int testconnect = 0; //  permet de savoir si la connection est faite
 
 void RAMQTTClass::setup()
 {
+
+ 
   if (!SAP)
   {
     WiFi.begin(routeur.ssid, routeur.password); // connection au reseau 20 tentatives autorisées
@@ -134,14 +136,18 @@ void RAMQTTClass::commande_param(String mesg)
     if (com == 0)
     {
       strcpy(routeur.tensionOuTemperature, "");
+        routeur.relaisStatique = false;
     }
     if (com == 1)
     {
       strcpy(routeur.tensionOuTemperature, "D");
+        routeur.relaisStatique = true;
+
     }
     if (com == 2)
     {
       strcpy(routeur.tensionOuTemperature, "V");
+        routeur.relaisStatique = true;
     }
   }
   if (mesg.substring(0, 3).equals("tmp")) // reception ex: "tmp60" 60 minute de marche forcée
@@ -201,26 +207,15 @@ void RAMQTTClass::mqtt_publish(int a)
   doc["Gradateur"] = puissanceGradateur;
   doc["Temperature"] = temperatureEauChaude;
   doc["puissanceMono"] = puissanceDeChauffe;
-
   size_t n = serializeJson(doc, buffer); // calcul de la taille du json
-
-  // String output;    serializeJson(doc, output);   Serial.println(output);
-
-  buffer[n - 1] = '}';
-  buffer[n] = 0; // fermeture de la chaine json
+  buffer[n - 1] = '}';   buffer[n] = 0; // fermeture de la chaine json
   Serial.println(buffer);
   if (client.connected())
   {
-
-    if (client.publish(routeur.mqttopic, buffer, n) == true)
-    {
-      Serial.println(F("Success sending message"));
-    }
-    else
-    {
-      Serial.println(F("Error sending message"));
-    }
+    if (client.publish(routeur.mqttopic, buffer, n) == true)     {      Serial.println(F("Success sending message"));
+    }    else    {      Serial.println(F("Error sending message"));    }
   }
+   doc.clear();
 
   client.loop();
   if (a == 0)
@@ -234,6 +229,15 @@ void RAMQTTClass::mqtt_publish(int a)
   doc2["coeffTension"] = routeur.coeffTension;
   doc2["seuilTension"] = routeur.seuilDemarrageBatterie;
   doc2["toleranceNeg"] = routeur.toleranceNegative;
+  n = serializeJson(doc2, buffer); // calcul de la taille du json
+  buffer[n - 1] = '}';
+  buffer[n] = 0; // fermeture de la chaine json
+  Serial.println(buffer);
+  if (client.connected())   {
+    if (client.publish(routeur.mqttopicParam1, buffer, n) == true)     {       Serial.println(F("Success sending message param"));
+    }     else     {       Serial.println(F("Error sending message param"));     }
+  }
+   doc2.clear();
 
   StaticJsonDocument<capacity> doc3;
   doc3["sortie2"] = routeur.utilisation2Sorties;
@@ -241,46 +245,24 @@ void RAMQTTClass::mqtt_publish(int a)
   doc3["sortie2_tempBas"] = routeur.temperatureRetourSortie1;
   doc3["temporisation"] = temporisation;
   doc3["sortieActive"] = sortieActive;
-
+  n = serializeJson(doc3, buffer); // calcul de la taille du json
+  buffer[n - 1] = '}';  buffer[n] = 0; // fermeture de la chaine json
+  Serial.println(buffer);
+  if (client.connected())
+  {
+    if (client.publish(routeur.mqttopicParam2, buffer, n) == true)    {       Serial.println(F("Success sending message param"));
+    }     else     {       Serial.println(F("Error sending message param"));     }
+  }
+   doc3.clear();
+  
   StaticJsonDocument<capacity> doc4;
-  doc4["relaisStatique"] = routeur.relaisStatique;
-  doc4["tensionOuTemperature"] = routeur.tensionOuTemperature;
+  doc4["sortieRelaisTemp"] = (routeur.relaisStatique && (routeur.tensionOuTemperature[0]=='D'));
+  doc4["sortieRelaisTens"] = (routeur.relaisStatique && (routeur.tensionOuTemperature[0]=='V'));
   doc4["relaisMax"] = routeur.seuilMarche;
   doc4["relaisMin"] = routeur.seuilArret;
   doc4["Forcage_1h"] = marcheForcee;
 
-  n = serializeJson(doc2, buffer); // calcul de la taille du json
-  buffer[n - 1] = '}';
-  buffer[n] = 0; // fermeture de la chaine json
-  Serial.println(buffer);
-  if (client.connected())
-  {
-    if (client.publish(routeur.mqttopicParam1, buffer, n) == true)
-    {
-      Serial.println(F("Success sending message param"));
-    }
-    else
-    {
-      Serial.println(F("Error sending message param"));
-    }
-  }
-
-  n = serializeJson(doc3, buffer); // calcul de la taille du json
-  buffer[n - 1] = '}';
-  buffer[n] = 0; // fermeture de la chaine json
-  Serial.println(buffer);
-  if (client.connected())
-  {
-    if (client.publish(routeur.mqttopicParam2, buffer, n) == true)
-    {
-      Serial.println(F("Success sending message param"));
-    }
-    else
-    {
-      Serial.println(F("Error sending message param"));
-    }
-  }
-
+  
   n = serializeJson(doc4, buffer); // calcul de la taille du json
   buffer[n - 1] = '}';
   buffer[n] = 0; // fermeture de la chaine json
@@ -296,6 +278,7 @@ void RAMQTTClass::mqtt_publish(int a)
       Serial.println(F("Error sending message param"));
     }
   }
+   doc4.clear();
 
   client.loop();
 
@@ -326,6 +309,7 @@ void RAMQTTClass::mqtt_publish(int a)
       Serial.println(F("Error sending message"));
     }
   }
+   doc5.clear();
 
   /********************* fin d'envoie ***********************/
   client.loop();

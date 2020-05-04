@@ -84,11 +84,11 @@ int RARegulationClass::regulGrad(int dev)
   calPuisav = calPuis;
   if (puisGradmax < calPuis)
   {
-    puisGradmax = calPuis;
+    puisGradmax = calPuis; // puissance maximeum de fonctionnement
   }
   if ((intensiteBatterie < 0) && (intensiteBatterie > -routeur.toleranceNegative))
   {
-    intensiteBatterie = intensiteBatterie + routeur.toleranceNegative; //correction des mesure proche de zéro
+    intensiteBatterie = intensiteBatterie + routeur.toleranceNegative; //correction des mesures proche de zéro
   }
   if (intensiteBatterie < 0)
   {
@@ -162,7 +162,7 @@ int RARegulationClass::regulGrad(int dev)
   } // si la batterie commence à se décharger
   if ((intensiteBatterie < 2) && (intensiteBatterie > 0.2) && (devlente == 0))
   {
-    calPuis += variation_lente;
+    calPuis += variation_normale;
   } // si la batterie commence à se décharger
 
   if (intensiteBatterie < 0)
@@ -211,8 +211,9 @@ int RARegulationClass::regulGrad(int dev)
 /**************************************/
 unsigned long tempdepart;
 int tempo = 0;
+int tempo2 = 0;
 
-int RARegulationClass::pilotage()
+void RARegulationClass::pilotage()
 {
   // pilotage du 2eme triac
 #ifndef MesureTemperature
@@ -221,7 +222,7 @@ int RARegulationClass::pilotage()
   if (routeur.utilisation2Sorties)
   {
     if ((puissanceDeChauffe == 0) && (puissanceGradateur > 100))
-      tempo2 = ++;
+      tempo2++;
     else
       tempo2 = 0; // demarre la tempo chauffe-eau temp atteinte
     if (tempo2 > 10)

@@ -135,18 +135,26 @@ function submitSummary() {
         displayContent();
     }, 1500);
 }
-function submitSystem() {
+function submitSystem(needRestart) {
     const seuilDemarrageBatterieValid = document.getElementById('seuilDemarrageBatterie').checkValidity();
     const toleranceNegativeValid = document.getElementById('toleranceNegative').checkValidity();
 
     if (seuilDemarrageBatterieValid && toleranceNegativeValid) {
-        document.getElementById('toastRestart').className = 'notif peek';
-        document.getElementById('toastRestart').style.animation = 'none';
+        const idToast = needRestart ? 'toastRestart' : 'toast';
+        if (needRestart) {
+
+        } else {
+
+        }
+        document.getElementById(idToast).className = 'notif peek';
+        document.getElementById(idToast).style.animation = 'none';
         setTimeout(function () {
-            document.getElementById('toastRestart').style.animation = '';
+            document.getElementById(idToast).style.animation = '';
         }, 10);
         sessionStorage.removeItem("settings");
-        document.getElementById('systemForm').submit(); setTimeout(function () {
+        document.getElementById('needRestart').value = needRestart;
+        document.getElementById('systemForm').submit();
+        setTimeout(function () {
             displayContent();
         }, 2000);
     }
@@ -196,7 +204,7 @@ function setSummarySettingsContent(settings) {
     content = addInputNested(settings["userSettings"]["temporisation"], "temporisation", content, false, 'number');
     content += "</div>";
     content += "<div style='display: flex; flex-direction: column; align-items: flex-end; margin: 1em 0;'>";
-    content += "    <button class='btn btn-form' onclick='submitSummary()'><span>Enregistrer</span></button>";
+    content += "    <button class='btn btn-form' onclick='submitSummary()'><span>Valider</span></button>";
     content += "</div>";
     content += "</form></div>";
     document.getElementById('content').innerHTML = content;
@@ -217,7 +225,7 @@ function setSystemSettingsContent(settings) {
 
     content += "<div class='card card-2'>";
     content = addSwitch(settings["userSettings"]["utilisation2Sorties"], "utilisation2Sorties", "update2Sortie", content);
-    content = addSelectBasculementMode(settings["userSettings"]["basculementMode"], content, !settings["userSettings"]["utilisation2Sorties"].value);
+    content = addSelectBasculementMode(settings["userSettings"]["basculementMode"], content, false);
     content = addInputNested(settings["userSettings"]["temperatureBasculementSortie2"], "temperatureBasculementSortie2", content, false, 'number');
     content = addInputNested(settings["userSettings"]["temperatureRetourSortie1"], "temperatureRetourSortie1", content, false, 'number');
     content += "</div>";
@@ -227,11 +235,15 @@ function setSystemSettingsContent(settings) {
     content = addRadioButtonRelaisStatique(settings["userSettings"]["tensionOuTemperature"], content);
     content = addInputNested(settings["userSettings"]["seuilMarche"], "seuilMarche", content, false, 'number');
     content = addInputNested(settings["userSettings"]["seuilArret"], "seuilArret", content, false, 'number');
+    content += "    <input type='hidden' name='needRestart' id='needRestart' value='false'></input>";
+
     content += "</div>";
 
     content += "<div style='display: flex; flex-direction: column; align-items: flex-end; margin: 1em 0;'>";
-    content += "    <button class='btn btn-form' onclick='submitSystem()'><span>Enregistrer</span></button>";
-    content += "</div>";
+    content += "<div style='display: flex;'>";
+    content += "    <button class='btn btn-form' style='margin-right: .5em;' onclick='submitSystem(true)'><span>Enregistrer</span></button>";
+    content += "    <button class='btn btn-form' onclick='submitSystem(false)'><span>Valider</span></button>";
+    content += "</div></div>";
 
     content += "</form></div>";
     document.getElementById('content').innerHTML = content;

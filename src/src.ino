@@ -14,6 +14,8 @@ bool SAP = false;
 //**************************************************************/
 // Initialisation du système
 //**************************************************************/
+const char *version_soft = "Version 1.1";
+
 const int pinTriac = 27;         // GPIO27 triac
 const int pinPince = 32;         // GPIO32   pince effet hall
 const int zeroc = 33;            // GPIO33  passage par zéro de la sinusoide
@@ -41,7 +43,6 @@ bool MQTT = false;
 bool serverOn = false;
 bool modeparametrage = false;
 bool marcheForcee = false;
-const char *version_soft = "Version 1.0";
 
 #ifdef Pzem04t
 float Pzem_i = 0;
@@ -71,9 +72,7 @@ float Pzem_W = 0;
 #ifdef Bluetooth
 #include "modeBT.h"
 #endif
-#ifdef MesureTemperature
 #include "mesure.h"
-#endif
 #include "regulation.h"
 #ifdef simulation
 #include "simulation.h"
@@ -240,8 +239,7 @@ void loop()
   if (resetEsp == 1)
   {
     RATriac.stop_interrupt();
-    struct param routeur;
-    RAPrgEEprom.sauve_param();
+    RAPrgEEprom.close_param(); 
     delay(5000);
   }
 #endif

@@ -4,16 +4,20 @@
 /**********************************************/
 /********** Liste des options possibles ******/
 /********************************************/
-#define MesureTemperature // capteur DS18B20       installer librairie dallas temperature
-#define Pzem04t           // utilise un pzem004 pour la mesure de puissance dans le ballon
-#define Sortie2           // utilise un 2eme triac
-//#define WifiMqtt          // mettre en commentaire si pas de réseau       installer librairie ArduinoJson et PubSubClient
-#define WifiServer        // affiche les mesures dans une page html crée un point d'accès si pas de reseau
+#define simulation // utiliser pour faire les essais sans les accessoires
+//#define Parametrage;
+
+//**** options MINI ****
 #define EcranOled         // si pas d'écran oled      installer librairie heltec dev board
+#define MesureTemperature // capteur DS18B20       installer librairie dallas temperature
+#define WifiServer // affiche les mesures dans une page html crée un point d'accès si pas de reseau
+#define WifiMqtt   // mettre en commentaire si pas de réseau       installer librairie ArduinoJson et PubSubClient
+
+//**** options MAXI  ****
+//#define Pzem04t           // utilise un pzem004 pour la mesure de puissance dans le ballon  inclure  https://github.com/mandulaj/PZEM-004T-v30
+//#define Sortie2    // utilise un 2eme triac
+#define F50HZ // Frequence du reseau 50HZ ou 60HZ non testé
 //#define Bluetooth             // autorise les applications smartphone
-//#define simulation // utiliser pour faire les essais sans les accessoires
-#define F50HZ // Frequence du reseau 50Hz ou 60Hz non testé
-//#define RSTEEprom    // mettre 1 pour reinitialiser l'eeprom
 
 struct param
 {

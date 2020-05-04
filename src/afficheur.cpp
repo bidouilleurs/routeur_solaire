@@ -65,7 +65,9 @@ void RAAfficheurClass::affichage_oled()
     display.setFont(ArialMT_Plain_10);
     display.drawString(35, 13, "I = " + String(intensiteBatterie) + " A  ");
     display.drawString(35, 24, "U = " + String(capteurTension) + " V  ");
+    #ifdef MesureTemperature
     display.drawString(35, 35, "T = " + String(temperatureEauChaude) + " °C  ");
+    #endif
     // display.drawString(1, 39, "Puis = " + String(puissanceMono) + " W  ");
     // write the buffer to the display
     display.display();

@@ -10,6 +10,7 @@ public:
   void setup();
   void sauve_param();
   void restore_param();
+  void close_param();
 };
 extern RAPrgEEpromClass RAPrgEEprom;
 

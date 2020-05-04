@@ -7,6 +7,7 @@
 #include "triac.h"
 #include "prgEEprom.h"
 #include <string.h>
+
 #include <SPIFFS.h>
 
 int pause_inter = 0;
@@ -15,7 +16,6 @@ IPAddress local_ip(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
 bool restartEsp = false;
-int testconnect = 0; //  permet de savoir si la connection est faite
 
 DynamicJsonDocument RAServerClass::readSettingsFile()
 {
@@ -36,53 +36,44 @@ DynamicJsonDocument RAServerClass::readSettingsFile()
     return doc;
 }
 
-void RAServerClass::connexionSAP()
-{
-    const char *ssid = "routeur_esp32"; // mode point d'accès
-    const char *password = "adminesp32";
-    WiFi.enableAP(true);
-    delay(100);
-    WiFi.softAP(ssid, password); // l'esp devient serveur et se place à l'adresse 192.168.4.1
-    WiFi.softAPConfig(local_ip, gateway, subnet);
-    IPAddress myIP = WiFi.softAPIP();
-    Serial.print("AP IP address: ");
-    Serial.println(myIP);
-}
-
 void RAServerClass::setup()
 {
-    if (SAP)
-    {
-        connexionSAP();
-    }
-    else if (!MQTT)
-    {
 
-        { // connection wifi sans mqtt il faut commenter #define WifiMqtt
-            WiFi.begin(routeur.ssid, routeur.password);
-            Serial.println("Tentative de connexion...");
-
-            while ((testconnect < 20) && (WiFi.status() != WL_CONNECTED))
-            {
-                Serial.print(".");
-                delay(300);
-                testconnect++;
-            }
-            if (testconnect < 20)
-            { // connection réussie
-                Serial.println("\n");
-                Serial.println("Connexion etablie!");
-                Serial.print("Adresse IP: ");
-                Serial.println(WiFi.localIP());
-            }
-            else
-            {
-                SAP = true;
-                 Serial.println("Erreur de connexion au Wifi, passage en mode SAP");
-                connexionSAP();
-            }
+#ifndef WifiMqtt
+    int testconnect = 0;
+    if (!SAP)
+    {
+        WiFi.begin(routeur.ssid, routeur.password); // connection au reseau 20 tentatives autorisées
+        while ((testconnect < 20) && (WiFi.status() != WL_CONNECTED))
+        {
+            delay(500);
+            Serial.println(F("Connection au WiFi.."));
+            testconnect++;
+        }
+        if (testconnect >= 20)
+            SAP = true;
+        else
+        {
+            Serial.println("\n");
+            Serial.println("Connexion etablie!");
+            Serial.print("Adresse IP: ");
+            Serial.println(WiFi.localIP());
         }
     }
+#endif
+    if (SAP)
+    {
+        const char *ssid = "routeur_esp32"; // mode point d'accès
+        const char *password = "adminesp32";
+        WiFi.enableAP(true);
+        delay(100);
+        WiFi.softAP(ssid, password); // l'esp devient serveur et se place à l'adresse 192.168.4.1
+        WiFi.softAPConfig(local_ip, gateway, subnet);
+        IPAddress myIP = WiFi.softAPIP();
+        Serial.print("AP IP address: ");
+        Serial.println(myIP);
+    }
+
     if (!SPIFFS.begin())
     {
         Serial.println("Erreur SPIFFS...");
@@ -171,14 +162,15 @@ void RAServerClass::saveSystemSettings(String jsonResult)
     routeur.toleranceNegative = atof(doc["toleranceNegative"]);
     routeur.utilisation2Sorties = doc["utilisation2Sorties"] == "true";
     routeur.temperatureBasculementSortie2 = atof(doc["temperatureBasculementSortie2"]);
+    strcpy(routeur.basculementMode, doc["basculementMode"]);
     routeur.temperatureRetourSortie1 = atof(doc["temperatureRetourSortie1"]);
     strcpy(routeur.tensionOuTemperature, doc["tensionOuTemperature"]);
     routeur.relaisStatique = doc["relaisStatique"] == "true";
     routeur.seuilMarche = atof(doc["seuilMarche"]);
     routeur.seuilArret = atof(doc["seuilArret"]);
+    restartEsp = doc["needRestart"] == "true" ? 1 : 0;
     doc.clear();
     RAPrgEEprom.sauve_param();
-    restartEsp = true;
     pause_inter = 1;
 }
 
@@ -383,7 +375,7 @@ void RAServerClass::loop()
     if (restartEsp)
     {
         delay(200);
-        ESP.restart();
+        resetEsp = 1;
     }
     if (pause_inter > 0)
     {
