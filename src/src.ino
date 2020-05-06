@@ -150,7 +150,10 @@ void loop()
   RAMesure.mesurePinceTension(700, 20); // mesure le courant et la tension avec 2 boucles de filtrage (700,20)
 
 #ifdef simulation
-  RASimulation.imageMesure(0); // permet de faire des essais sans matériel
+  if (!modeparametrage)
+  {
+    RASimulation.imageMesure(0); // permet de faire des essais sans matériel
+  }
 #endif
 
   if (!modeparametrage)
@@ -239,7 +242,7 @@ void loop()
   if (resetEsp == 1)
   {
     RATriac.stop_interrupt();
-    RAPrgEEprom.close_param(); 
+    RAPrgEEprom.close_param();
     delay(5000);
   }
 #endif

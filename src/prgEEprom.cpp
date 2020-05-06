@@ -8,7 +8,6 @@
 
 void RAPrgEEpromClass::setup()
 {
-  int configeeprom = 0;
   EEPROM.begin(EEPROM_SIZE);
 
   if (EEPROM.read(0) != 123)
