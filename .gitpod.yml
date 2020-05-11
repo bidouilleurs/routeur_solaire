@@ -1,6 +1,8 @@
 tasks:
   - before: pip3 install -U platformio
-    command: 
-      - pio clean 
-      - pio run -t uploadfs
-      - pio run -t upload
+  - command: git clean -f
+  - command: git fetch
+  - command: git pull
+  - command: pio clean 
+  - command: pio run -t uploadfs
+  - command: pio run -t upload
