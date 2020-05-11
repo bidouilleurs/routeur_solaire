@@ -5,15 +5,20 @@
 #ifdef EcranOled
 #include "afficheur.h"
 #include <Wire.h>        // Only needed for Arduino 1.6.5 and earlier
-#include "SSD1306Wire.h" // legacy: #include "SSD1306.h"
 #include <WiFi.h> // legacy: #include "SSD1306.h"
 
 int teAff = 0;
+
+
+
+#ifndef HELTEC
+#include "SSD1306Wire.h" // legacy: #include "SSD1306.h"
 SSD1306Wire display(0x3c, SDA, SCL);
 
 void RAAfficheurClass::setup()
 {
   pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
 
   // Initialising the UI will init the display too.
   display.init();
@@ -26,9 +31,9 @@ void RAAfficheurClass::setup()
   affiche(31, "   -tonome");
 #ifdef WifiServer
   if (!SAP)
-    affiche(42, WiFi.localIP().toString());
+    affiche(39, WiFi.localIP().toString());
   else
-    affiche(42, WiFi.softAPIP().toString());
+    affiche(39, WiFi.softAPIP().toString());
 #endif
 
 #ifdef Bluetooth
@@ -66,9 +71,9 @@ void RAAfficheurClass::affichage_oled()
       { digitalWrite(LED_BUILTIN, LOW);cliled=1;}
   if (testwifi!=0)
   {
-      digitalWrite(LED_BUILTIN, HIGH);
-    delay(100);
-      digitalWrite(LED_BUILTIN, LOW);
+ //     digitalWrite(LED_BUILTIN, HIGH);
+ //   delay(100);
+     digitalWrite(LED_BUILTIN, LOW);
    
   }
 
@@ -101,6 +106,79 @@ void RAAfficheurClass::affichage_oled()
   }
   teAff++;
 }
+#endif
+
+
+/************************************************/
+/*********** pour la heltec *********************/
+/************************************************/
+#ifdef HELTEC
+ #include "heltec.h"
+
+
+void RAAfficheurClass::setup(){
+       Heltec.begin(true /*DisplayEnable Enable*/, false /*LoRa Disable*/, true /*Serial Enable*/);
+        Heltec.display->setContrast(125);
+        cls();
+        affiche(1, "Les bidouilleurs");
+        affiche(15, "Reseautonome");
+      #ifdef WifiServer
+        if (!SAP) affiche(32, WiFi.localIP().toString()); else affiche(32, WiFi.softAPIP().toString());
+      #endif
+      
+      #ifdef Bluetooth          
+        affiche(44, "Bluetooth");
+      #endif
+}
+
+
+void RAAfficheurClass::cls(){
+
+  for (int16_t i=0; i<DISPLAY_HEIGHT/2; i+=2) {
+    Heltec.display->drawRect(i, i, DISPLAY_WIDTH-2*i, DISPLAY_HEIGHT-2*i);
+    Heltec.display->display();
+//    delay(10);
+  }
+   Heltec.display->clear();
+   Heltec.display->display();
+  delay(500);
+   Heltec.display->clear();
+   Heltec.display->display();
+
+}
+
+void  RAAfficheurClass::affiche(int li,String a){
+ Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
+  Heltec.display->setFont(ArialMT_Plain_16);
+  Heltec.display->drawString(0, li, a);  
+    // write the buffer to the display
+  Heltec.display->display();
+}
+
+
+
+void RAAfficheurClass::affichage_oled(){
+ if (teAff>=5) {
+  Heltec.display->clear();
+  Heltec.display->drawProgressBar(0, 53, 120, 10, abs(puissanceGradateur)/10);
+  // draw the percentage as String
+  Heltec.display->setTextAlignment(TEXT_ALIGN_LEFT);
+  Heltec.display->setFont(ArialMT_Plain_10);
+  Heltec.display->drawString(4, 0, "I_bat = " + String(intensiteBatterie) + " A  ");  
+  Heltec.display->drawString(4, 13, "U_bat = " + String(capteurTension) + " V  ");  
+  Heltec.display->drawString(4, 27, "T°   = " + String(temperatureEauChaude) + " °C  ");  
+//  Heltec.display->drawString(4, 39, "Puis = " + String(puissanceMono) + " W  ");  
+   // write the buffer to the display
+  Heltec.display->display();
+  teAff=0;
+  }
+ teAff++;
+
+}
+
+ #endif  // heltec
+
+
 
 RAAfficheurClass RAAfficheur;
 #endif

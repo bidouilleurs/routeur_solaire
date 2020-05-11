@@ -12,6 +12,8 @@ class RAServerClass
 public:
     void setup();
     void loop();
+    void coupure_reseau();
+
 
 private:
     DynamicJsonDocument readSettingsFile();
@@ -21,7 +23,6 @@ private:
     void saveSystemSettings(String jsonResult);
     void getNewSettings(WiFiClient client);
     void getSettings(WiFiClient client);
-    void connexionSAP();
 };
 
 extern RAServerClass RAServer;

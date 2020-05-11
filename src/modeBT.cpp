@@ -19,7 +19,7 @@ int pause_inter_bt = 0;
 
 void RABluetoothClass::setup()
 {
-  SerialBT.begin("routeurESP32"); //Bluetooth device name
+  SerialBT.begin("routeurWemos"); //Bluetooth device name
   Serial.println(F("Démarrage du BT appairage en attente"));
 }
 void RABluetoothClass::BT_commande()
@@ -114,21 +114,21 @@ void RABluetoothClass::BT_visu_param()
     comm += "S1= ";
     comm += String(routeur.utilisation2Sorties);
   }
-  if (iparam == 15)
+  if (iparam == 16)
   {
     comm += "S2= ";
-    comm += String(strcmp(routeur.tensionOuTemperature, "D"));
+    if (routeur.relaisStatique && (routeur.tensionOuTemperature[0]=='D'))  comm += '1'; else comm += '0';
   }
-  if (iparam == 17)
+  if (iparam == 15)
   {
     comm += "S3= ";
     comm += String(marcheForcee);
   }
-  if (iparam == 16)
+  if (iparam == 17)
   {
     comm += "S4= ";
-    comm += String(strcmp(routeur.tensionOuTemperature, "V"));
-  }
+     if (routeur.relaisStatique && (routeur.tensionOuTemperature[0]=='V'))  comm += '1'; else comm += '0';
+   }
 
   for (int i = 0; i < comm.length(); i++)
     SerialBT.write(comm.charAt(i));
@@ -140,16 +140,13 @@ void RABluetoothClass::BT_visu_param()
 void RABluetoothClass::read_bluetooth()
 {
   if (SerialBT.available())
-    aff_visubt = 10;
+    aff_visubt = 1;
   else
-    aff_visubt++;
-  if (aff_visubt < 10)
-    return;
-  aff_visubt = 0;
-  Serial.println("Synchro Bluetooth");
+    aff_visubt = 0;
+   Serial.println("Synchro Bluetooth");
   RATriac.stop_interrupt();
   // delay(10);
-  BT_commande();
+  if (aff_visubt == 1) BT_commande();
   for (int i = 1; i < 17; i++)
   {
     BT_visu_param();

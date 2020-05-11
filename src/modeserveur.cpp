@@ -6,9 +6,16 @@
 #include "modeserveur.h"
 #include "triac.h"
 #include "prgEEprom.h"
+#include "afficheur.h"
 #include <string.h>
 
 #include <SPIFFS.h>
+
+#ifdef WifiSAPServeur
+bool wifiSAP = true;
+#else
+bool wifiSAP = false;
+#endif
 
 int pause_inter = 0;
 WiFiServer server(80);
@@ -110,17 +117,8 @@ void RAServerClass::saveMqttSettings(String jsonResult)
     strcpy(routeur.mqttopicParam2, doc["mqttopicParam2"]);
     strcpy(routeur.mqttopicParam3, doc["mqttopicParam3"]);
     strcpy(routeur.mqttopicPzem1, doc["mqttopicPzem1"]);
-    // On modifie les mots de passe quand ils sont différents  d'astérisque
-    char mqttPasswordReplace[50] = "";
-    for (int i = 0; routeur.mqttPassword[i] != '\0'; ++i)
-    {
-        mqttPasswordReplace[i] = '*';
-    }
-    bool isPwdSet = doc["mqttPassword"] != mqttPasswordReplace;
-    if (isPwdSet)
-    {
-        strcpy(routeur.mqttPassword, doc["mqttPassword"]);
-    }
+    strcpy(routeur.mqttPassword, doc["mqttPassword"]);
+
     doc.clear();
     RAPrgEEprom.sauve_param();
     restartEsp = true;
@@ -133,20 +131,8 @@ void RAServerClass::saveWifiSettings(String jsonResult)
     StaticJsonDocument<1000> doc;
     deserializeJson(doc, jsonResult);
     strcpy(routeur.ssid, doc["ssid"]);
-    // On modifie les mots de passe quand ils sont différents  d'astérisque
-    char passwordReplace[50] = "";
-    for (int i = 0; routeur.password[i] != '\0'; ++i)
-    {
-        passwordReplace[i] = '*';
-    }
-    bool isPwdSet = doc["password"] != passwordReplace;
-    if (isPwdSet)
-    {
-        strcpy(routeur.password, doc["password"]);
-    }
+    strcpy(routeur.password, doc["password"]);
     doc.clear();
-    // RAPrgEEprom.sauve_param();
-    // pause_inter = 1;
 }
 
 void RAServerClass::saveSystemSettings(String jsonResult)
@@ -231,20 +217,9 @@ void RAServerClass::getSettings(WiFiClient client)
     doc["settings"]["communicationSettings"]["mqttopicPzem1"] = routeur.mqttopicPzem1;
     doc["settings"]["communicationSettings"]["ssid"] = routeur.ssid;
 
-    // on n'envoie pas les vrais mdp
-    char passwordReplace[50] = "";
-    for (int i = 0; routeur.password[i] != '\0'; ++i)
-    {
-        passwordReplace[i] = '*';
-    }
-    char mqttPasswordReplace[50] = "";
-    for (int i = 0; routeur.mqttPassword[i] != '\0'; ++i)
-    {
-        mqttPasswordReplace[i] = '*';
-    }
+    doc["settings"]["communicationSettings"]["password"] = routeur.password;
+    doc["settings"]["communicationSettings"]["mqttPassword"] = routeur.mqttPassword;
 
-    doc["settings"]["communicationSettings"]["password"] = passwordReplace;
-    doc["settings"]["communicationSettings"]["mqttPassword"] = mqttPasswordReplace;
     String result = doc["settings"];
     doc.clear();
     client.println(result);
@@ -252,6 +227,11 @@ void RAServerClass::getSettings(WiFiClient client)
 
 void RAServerClass::loop()
 {
+    if ((!SAP) && (WiFi.status() != WL_CONNECTED))
+    {
+        resetEsp = 1;
+        return;
+    }
     WiFiClient client = server.available(); // listen for incoming clients
     if (client)
     {
@@ -393,6 +373,43 @@ void RAServerClass::loop()
     {
         pause_inter = 0;
         RATriac.restart_interrupt();
+    }
+}
+
+int resloop = 0;
+void RAServerClass::coupure_reseau()
+{
+    if ((!wifiSAP) && (SAP))
+    {
+        resloop++;
+        if (resloop > 40)
+        {
+            Serial.println(F("Attente de reseau "));
+            WiFi.disconnect();
+            int n = WiFi.scanNetworks();
+            Serial.println("scan done");
+            if (n == 0)
+            {
+                Serial.println("no networks found");
+            }
+            else
+            {
+                Serial.print(n);
+                Serial.println(" networks found");
+                for (int i = 0; i < n; ++i)
+                {
+                    if (WiFi.SSID(i) == routeur.ssid)
+                        resetEsp = 1;
+                    delay(10);
+                }
+            }
+            resloop = 0;
+#ifdef EcranOled
+            RAAfficheur.cls();
+            RAAfficheur.affiche(20, "WIFI");
+            RAAfficheur.affiche(35, "Deconnecte");
+#endif
+        }
     }
 }
 

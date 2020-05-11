@@ -257,7 +257,7 @@ function setCommunicationSettingsContent(settings) {
 
     content += "<div class='card card-2'><h2 style='margin: 0em 1em 0.5em .8em;color: #2f409f;font-weight: 700;'>WIFI</h2>";
     content = addInput(settings["communicationSettings"]["ssid"], "ssid", content, false, 'text', 'ssid');
-    content = addInput(settings["communicationSettings"]["password"], "password", content, false, 'password', 'password');
+    content = addInput(settings["communicationSettings"]["password"], "password", content, false, 'text', 'password');
     content += "</div>";
 
     content += "</form>";
@@ -268,7 +268,7 @@ function setCommunicationSettingsContent(settings) {
     content = addInput(settings['communicationSettings']['mqttServer'], 'mqttServer', content, false, 'text', 'mqttServer');
     content = addInput(settings['communicationSettings']['mqttPort'], 'mqttPort', content, false, 'number', 'mqttPort');
     content = addInput(settings['communicationSettings']['mqttUser'], 'mqttUser', content, false, 'text', 'mqttUser');
-    content = addInput(settings['communicationSettings']['mqttPassword'], 'mqttPassword', content, false, 'password', 'mqttPassword');
+    content = addInput(settings['communicationSettings']['mqttPassword'], 'mqttPassword', content, false, 'text', 'mqttPassword');
     content = addInput(settings['communicationSettings']['mqttopic'], 'mqttopic', content, false, 'text', 'mqttopic');
     content = addInput(settings['communicationSettings']['mqttopicInput'], 'mqttopicInput', content, false, 'text', 'mqttopicInput');
     content = addInput(settings['communicationSettings']['mqttopicParam1'], 'mqttopicParam1', content, false, 'text', 'mqttopicParam1');

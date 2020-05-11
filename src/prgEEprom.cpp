@@ -26,11 +26,8 @@ void RAPrgEEpromClass::setup()
   Serial.println("EEprom ok");
   delay(100);
   Serial.println();
-  if (!SAP)
-  {
-    Serial.print(F("le ssid est  "));
-    Serial.println(routeur.ssid); // verification de la lecture
-  }
+  Serial.print(F("le ssid est  "));
+  Serial.println(routeur.ssid); // verification de la lecture
 }
 
 void RAPrgEEpromClass::sauve_param()

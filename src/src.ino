@@ -6,16 +6,13 @@
 // un ballon d'eau chaude
 //**************************************************************/
 
+const char *version_soft = "Version 1.2";
+
+//**************************************************************/
+// Initialisation
+//**************************************************************/
 #include "settings.h"
-
-// Mettre à true pour un lancement en mode serveur
-bool SAP = false;
-
-//**************************************************************/
-// Initialisation du système
-//**************************************************************/
-const char *version_soft = "Version 1.1";
-
+struct param routeur;
 const int pinTriac = 27;         // GPIO27 triac
 const int pinPince = 32;         // GPIO32   pince effet hall
 const int zeroc = 33;            // GPIO33  passage par zéro de la sinusoide
@@ -25,6 +22,7 @@ const int pinTension = 36;       // GPIO36   capteur tension
 const int pinTemp = 23;          // GPIO23  capteurTempérature
 const int pinSortie2 = 13;       // pin13 pour  2eme "gradateur
 const int pinRelais = 19;        // Pin19 pour sortie relais
+bool marcheForcee = false;
 short int marcheForceePercentage = 25;
 short int sortieActive = 1;
 unsigned long temporisation = 60;
@@ -34,15 +32,15 @@ int puissanceGradateur = 0;
 float temperatureEauChaude = 0;
 float puissanceDeChauffe = 0;
 bool etatRelaisStatique = false;
-struct param routeur;
+bool modeparametrage = false;
+
 int resetEsp = 0;
 int testwifi = 0;
 int choixSortie = 0;
 int paramchange = 0;
+bool SAP = false;
 bool MQTT = false;
 bool serverOn = false;
-bool modeparametrage = false;
-bool marcheForcee = false;
 
 #ifdef Pzem04t
 float Pzem_i = 0;
@@ -53,30 +51,36 @@ float Pzem_W = 0;
 /**********************************************/
 /********** déclaration des librairiess *******/
 /**********************************************/
-#ifdef Bluetooth
-#include "modeBT.h"
-#endif
-#ifdef WifiServer
-#include "modeserveur.h"
-#endif
 #include "triac.h"
-#ifdef EEprom
-#include "prgEEprom.h"
-#endif
-#ifdef EcranOled
-#include "afficheur.h"
-#endif
+
 #ifdef WifiMqtt
 #include "modemqtt.h"
 #endif
+
+#ifdef WifiServer
+#include "modeserveur.h"
+#endif
+
+#ifdef EEprom
+#include "prgEEprom.h"
+#endif
+
+#ifdef EcranOled
+#include "afficheur.h"
+#endif
+
 #ifdef Bluetooth
 #include "modeBT.h"
 #endif
-#include "mesure.h"
-#include "regulation.h"
+
+//#define simulation // utiliser pour faire les essais sans les accessoires
 #ifdef simulation
 #include "simulation.h"
 #endif
+
+#include "mesure.h"
+#include "regulation.h"
+
 /***************************************/
 /******** Programme principal   ********/
 /***************************************/
@@ -101,6 +105,11 @@ void setup()
   Serial.println(version_soft);
   Serial.println();
 
+#ifdef EcranOled
+  RAAfficheur.setup();
+#endif
+
+
 #ifdef EEprom
   RAPrgEEprom.setup();
 #endif
@@ -109,6 +118,7 @@ void setup()
   marcheForcee = false; // mode forcé retirer au démarrage
   marcheForceePercentage = false;
   temporisation = 0;
+  
 #ifdef WifiMqtt
   RAMQTT.setup();
 #endif
@@ -133,7 +143,7 @@ void setup()
   Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); // redefinition des broches du serial2
 #endif
 
-#ifdef Parametrage
+#ifdef parametrage
   modeparametrage = true;
 #endif
 
@@ -144,16 +154,16 @@ void setup()
 
 int iloop = 0; // pour le parametrage par niveau
 
+
 void loop()
 {
   RATriac.watchdog(1);                  //chien de garde à 4secondes dans timer0
   RAMesure.mesurePinceTension(700, 20); // mesure le courant et la tension avec 2 boucles de filtrage (700,20)
 
+
 #ifdef simulation
-  if (!modeparametrage)
-  {
-    RASimulation.imageMesure(0); // permet de faire des essais sans matériel
-  }
+  if (!modeparametrage)RASimulation.imageMesure(0); // permet de faire des essais sans matériel
+  Serial.print("Mode simulation");
 #endif
 
   if (!modeparametrage)
@@ -174,8 +184,8 @@ void loop()
 
   if (modeparametrage)
   {
-    //int potar = map(analogRead(pinPotentiometre), 0, 4095, 0, 1000); // controle provisoire avec pot
-    iloop++;
+    int potar = map(analogRead(pinPotentiometre), 0, 4095, 0, 1000); // controle provisoire avec pot
+/*    iloop++;
     if (iloop < 10)
       puissanceGradateur = 1;
     else if (iloop < 20)
@@ -190,10 +200,10 @@ void loop()
       puissanceGradateur = 1000;
     else
       iloop = 0;
-    /*   if (potar>10) PuisGrad=potar;
-       else  if (potar<2) PuisGrad=0;
-                    else PuisGrad=1; // priorité au potensiometre                    // priorité au potensiometre
-    */
+    */   if (potar>10) puissanceGradateur=potar;
+       else  if (potar<2) puissanceGradateur=0;
+                    else puissanceGradateur=1; // priorité au potensiometre                    // priorité au potensiometre
+    
     Serial.println();
     Serial.print("Courant ");
     Serial.println(intensiteBatterie);
@@ -202,7 +212,7 @@ void loop()
     Serial.print("Gradateur ");
     Serial.println(puissanceGradateur);
     Serial.println();
-    delay(1000);
+    delay(200);
   }
 
   // affichage traceur serie
@@ -217,6 +227,8 @@ void loop()
   Serial.print(56 / 5);
   Serial.print(',');
   Serial.println(capteurTension / 5);
+//  Serial.print("zero");  Serial.println(routeur.zeropince);
+
 
 #ifdef EcranOled
   RAAfficheur.affichage_oled(); // affichage de lcd
@@ -228,21 +240,19 @@ void loop()
 
 #ifdef WifiServer
   RAServer.loop();
+  RAServer.coupure_reseau();
 #endif
 
 #ifdef Bluetooth
-  read_bluetooth();
-#endif
-
-#ifdef RSTEEprom // mettre 1 pour reinitialiser l'eeprom
-  resetEsp = 1;
+  RABluetooth.read_bluetooth();
 #endif
 
 #ifdef EEprom
+  
   if (resetEsp == 1)
   {
     RATriac.stop_interrupt();
-    RAPrgEEprom.close_param();
+    RAPrgEEprom.close_param(); 
     delay(5000);
   }
 #endif

@@ -20,9 +20,12 @@ int afftemp = 500;
 int affpzem = 5;
 
 // GPIO where the DS18B20 is connected to
+#ifdef MesureTemperature
 const int oneWireBus = pinTemp;
 OneWire oneWire(oneWireBus);
 DallasTemperature sensors(&oneWire);
+#endif
+
 #ifdef Pzem04t
 PZEM004Tv30 pzem(&Serial2);
 #endif
@@ -33,7 +36,8 @@ void RAMesureClass::setup()
 
 void RAMesureClass::mesurePinceTension(int jmax, int imax)
 {
-  int inttension = analogRead(pinTension); // mesure de tension
+ int inttension=0; // mesure de tension
+ float floattension=0;
   pince2 = 0;
   for (int j = 0; j < jmax; j++)
   { // boucle exterieure
@@ -51,7 +55,10 @@ void RAMesureClass::mesurePinceTension(int jmax, int imax)
     pince2 = intensiteBatterie;
 
     inttension = analogRead(pinTension);                // mesure de tension
-    capteurTension = inttension * routeur.coeffTension; // applique le coeff
+ //  floattension=inttension;
+ //  if (inttension<1500) capteurTension=inttension*routeur.coeffTension;  // applique le coeff
+ //    else capteurTension=(0.0383-1.85e-5*floattension+4.26e-9*floattension*floattension)*floattension;
+   capteurTension = inttension * routeur.coeffTension; // applique le coeff
     tensionav = (capteurTension + (imax - 1) * tensionav) / imax;
   }
 

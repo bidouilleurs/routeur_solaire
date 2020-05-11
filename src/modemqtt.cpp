@@ -9,6 +9,7 @@
 #include <WiFiClient.h>
 #include <PubSubClient.h>
 #include "WiFi.h"
+#include "afficheur.h"
 /************ WiFi & MQTT objects  ******************/
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -41,17 +42,22 @@ void RAMQTTClass::setup()
       while ((testconnect < 5) && (!client.connected()))
       { // connection au broker 5 tentatives autorisée
         testconnect++;
-        Serial.println(F("Connection au broker MQTT..."));
+        Serial.print(F("Connection au broker MQTT..."));
         if (client.connect("ESP32Client", routeur.mqttUser, routeur.mqttPassword))
         {
           Serial.println(F("connection active"));
         }
         else
         {
-          Serial.print(F("Erreur de connection "));
+          Serial.println(F("Erreur de connection "));
         }
-        Serial.print(client.state());
-        delay(100);
+ //       Serial.print(client.state());
+   #ifdef EcranOled
+    RAAfficheur.cls();delay(100);
+    RAAfficheur.affiche(20,"Err Brokeur");
+    RAAfficheur.affiche(35,String(testconnect));
+  #endif       
+    delay(100);
       }
       if (testconnect >= 5) // connection échouée au broker
       {
@@ -318,22 +324,26 @@ void RAMQTTClass::mqtt_publish(int a)
 
 void RAMQTTClass::loop()
 {
-  if ((testwifi == 0) && (!SAP) && (MQTT) && (!serverOn))
+  if ((!SAP) && (WiFi.status() != WL_CONNECTED))  { resetEsp = 1; return; }
+  if ((testwifi == 0) && (!SAP)  && (!serverOn))
   {
-    if ((WiFi.status() == WL_CONNECTED) && (client.connected()))
+//    if ((WiFi.status() == WL_CONNECTED) && (client.connected()))
+    if (WiFi.status() == WL_CONNECTED) 
     {                  // teste le wifi
-      mqtt_subcribe(); // lecture de information sur mqtt output/solar
+      bool mqttav=MQTT;
+      if (!client.connected()) MQTT=false; 
+      if(MQTT) mqtt_subcribe(); // lecture de information sur mqtt output/solar
                        //  (1) avec les parametres
       //  (0) seulement les indispensables tension courant ..
       if (paramchange == 1)
       {
-        mqtt_publish(1);
+        if(MQTT) mqtt_publish(1);
       }
       else
       {
-        mqtt_publish(0); // communication au format mqtt pour le reseau domotique
+        if(MQTT) mqtt_publish(0); // communication au format mqtt pour le reseau domotique
       }
-
+      MQTT=mqttav;
       paramchange = 0;
     }
     else
@@ -349,10 +359,7 @@ void RAMQTTClass::loop()
       resetEsp = 1; // si perte de signal trop longtemps reset esp32
   }
 
-  if (SAP)
-  {
-    Serial.print(F("Mode serveur ESP"));
-  }
+  
 }
 
 RAMQTTClass RAMQTT;
