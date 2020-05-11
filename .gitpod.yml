@@ -1,0 +1,6 @@
+tasks:
+  - before: pip3 install -U platformio
+    command: 
+      - pio clean 
+      - pio run -t uploadfs
+      - pio run -t upload
