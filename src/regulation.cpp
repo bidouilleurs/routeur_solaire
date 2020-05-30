@@ -2,6 +2,7 @@
 /******** pilotage et regulation   ********/
 /***************************************/
 #include "regulation.h"
+//#include "mesure.h"
 #include "settings.h"
 #include <Arduino.h>
 float xmax = 0;
@@ -14,7 +15,7 @@ int itab = 0;
 int RARegulationClass::mesureDerive(float x, float seuil)
 {
   int dev = 0;
-
+  devlente = 0;
   if (x > xmax)
   {
     dev = 1;
@@ -25,45 +26,31 @@ int RARegulationClass::mesureDerive(float x, float seuil)
 
   if (x < xmin)
   {
-    if ((xmin - x) > 10 * seuil)
-    {
-      devdecro = 1;
-    }
-    else
-    {
-      devdecro = 0; // gestion du décrochage chute brutale du courant
-    }
     dev = -1;
     xmin = x;
     xmax = xmin + seuil;
-
-    for (int i = 0; i < 9; i++)
-    {
-      tabxmin[9 - i] = tabxmin[8 - i];
-    }
-    tabxmin[0] = xmin; // range les valeurs mini
+   // mesure récente = 0  et ensuite ranger vers la plus ancienne
+     for (int i = 0; i < 9; i++)
+          {
+            tabxmin[9 - i] = tabxmin[8 - i];
+          }
+    tabxmin[0] = xmin; // range les valeurs mini  
     float deltaxmin = 0;
-    float xminmoy = tabxmin[0];
-
-    for (int i = 1; i < 10; i++)
-    {
-      deltaxmin += tabxmin[i] - tabxmin[0];
-    } // calcule la pente négative
-    //           for (int i=0;i<9;i++) { ondulxmin+=abs(tabxmin[i]-tabxmin[i+1]); }
-    if (itab < 10)
-    {
-      itab++; // retire les 10 premiers points avant de calculer
-    }
-    if ((itab >= 10) && (deltaxmin > 10 * seuil))
-    {
-      devlente = 1;
-    }
-    else
-    {
-      devlente = 0;
-    }
-    //          if ((itab>=10) && (ondulxmin>40*seuil)) devforte=1; else devforte=0;
-  } // si descend en dessous du seuil bas déplacement du seuil haut et bas
+     for (int i = 1; i < 10; i++)
+        {
+          deltaxmin += tabxmin[i] - tabxmin[0];
+        } // calcule la pente négative
+        
+    if (itab < 10)  itab++; // retire les 10 premiers points avant de calculer
+    if ((itab >= 10) && (deltaxmin > 10 * seuil))  // avec réglage de la pente de descente par le seuil
+        {
+          devlente = 1; // le courant décroit sur les 10 derniers points
+        }
+     else
+        {
+          devlente = 0;  // le courant croit ou reste constant sur les 10 derniers points
+        }
+   } // si descend en dessous du seuil bas déplacement du seuil haut et bas
   return dev;
 }
 
@@ -74,61 +61,47 @@ int devprevious = 0;
 int devcount = 0;
 int puisGradmax = 0;
 int tesTension = 0;
+int chargecomp = 0;
 #define variation_lente 1    // config 5
 #define variation_normale 10 // config 10
 #define variation_rapide 20  // config 20
 #define bridePuissance 900   // sur 1000
 
+
+int testpmax=0;
+
 int RARegulationClass::regulGrad(int dev)
 {
   calPuisav = calPuis;
-  if (puisGradmax < calPuis)
+    // décalage du courant pour maintenir la regulation proche de zéro
+  /*
+    if (intensiteBatterie < 0)   devcount = 0;
+   if (devprevious == dev)
           {
-            puisGradmax = calPuis; // puissance maximeum de fonctionnement
-          }
-  if ((intensiteBatterie < 0) && (intensiteBatterie > -routeur.toleranceNegative))
-          {
-            intensiteBatterie = intensiteBatterie + routeur.toleranceNegative;   //correction des mesures proche de zéro
-          }
-   if (intensiteBatterie < 0)
-          {
-            devcount = 0;
-          }
-  if (devprevious == dev)
-          {
-            if (devcount < 100)
-              devcount++;
-          }
-      else
-          {
-            devcount = 0;
-          }
+            if (devcount < 100)  devcount++; // si deviation dans le même sens
+          } else  devcount = 0;
+
+ //  courant constant
   if (dev == 0)
   {
-    calPuis += variation_lente;
-    if (devcount > 3)
-          {
-            calPuis += variation_normale;
-          }
-    if ((devcount > 7) && (calPuis < puisGradmax - 50))
-          {
+    calPuis += variation_lente;  // demarrage
+    if (devcount > 3)  calPuis += variation_normale; // accélération
+     if ((devcount > 7) && (calPuis < puisGradmax - 50)) // accélération jusque la puissance maxi
             calPuis += variation_rapide;
-          }
   }
-  if (dev > 0)
+ 
+ // courant croissant 
+   if (dev > 0)
   {
     calPuis += variation_lente;
-    if (devcount > 5)
-          {
-            calPuis += variation_normale;
-          }
-    if ((devcount > 7) && (calPuis < puisGradmax))
-          {
-            calPuis += variation_rapide;
-          }
+    if (devcount > 3)  calPuis += variation_normale;
+    if ((devcount > 7) && (calPuis < puisGradmax)) calPuis += variation_rapide;
   }
-  if ((dev < 0) || (intensiteBatterie < 0))
+  
+ // courant décroissant
+  if (dev < 0) 
   {
+    // fin de charge 
     if (intensiteBatterie < 2)
         {
           calPuis -= variation_normale + variation_lente;
@@ -137,71 +110,83 @@ int RARegulationClass::regulGrad(int dev)
         {
           calPuis -= variation_rapide + variation_lente;
         }
-    if (devcount > 2)
-        {
-          calPuis -= variation_normale;
-        }
-    if ((devcount > 5) && (intensiteBatterie > 2))
-        {
-          calPuis -= variation_rapide;
-        }
+     
+    if (devcount > 2) calPuis -= variation_normale; // accélération de la descente
+    if ((devcount > 5) && (intensiteBatterie > 2)) calPuis -= variation_rapide;
+  }*/
 
-    if (devlente == 1)
+   // descente réguliere lente 
+    if ((devlente == 1) && (intensiteBatterie > 0))
+    {
+    if (intensiteBatterie > 2)
         {
-          calPuis -= 2*variation_rapide;
+          calPuis -= 2* variation_rapide; //descente brutale
         }
-        //     if(devforte == 1) calPuis -= variation_normale;
-    if (devdecro == 1)
+        else
         {
-          calPuis -= variation_normale;
+          calPuis -= variation_lente;  // fin de charge descente lente
         }
-    }
-  if ((intensiteBatterie > 2) && (devlente == 0))
-        {
-          calPuis += variation_rapide;
-        } // si la batterie commence à se décharger
-  if ((intensiteBatterie < 2) && (intensiteBatterie > 0.2) && (devlente == 0))
-        {
-          calPuis += variation_normale;
-        } // si la batterie commence à se décharger
+     } else calPuis += variation_lente; // autorise la montée si la pente n'est pas descendante
 
-  if (intensiteBatterie < 0)
+  // courant varie mais reste globalement constant permet le décollage
+  if (devlente == 0) {
+            if (intensiteBatterie >= 2)  
+               { 
+                  chargecomp=0;  // charge en cours
+                  calPuis += variation_normale;
+                }
+            if ((intensiteBatterie < 2) && (intensiteBatterie >= 0) ) 
+                { 
+                  chargecomp=1;  // fin de charge
+                  calPuis += variation_normale;
+                }
+          if ((intensiteBatterie < 0) && (intensiteBatterie >= -routeur.toleranceNegative) ) 
+                { 
+                  chargecomp=1;  // fin de charge
+                  
+                }
+            }
+ 
+   if ((intensiteBatterie < 0) && (intensiteBatterie >= -routeur.toleranceNegative) )  {
+                   calPuis += variation_lente;
+            }
+ 
+  // mesure de la puissance maximum pour le remonter en puissance
+  if (calPuis<(8*puisGradmax/10) )  {
+                   calPuis += variation_normale;
+            } puisGradmax = calPuis;
+ 
+   
+ // courant devient négatif
+   if (intensiteBatterie < -routeur.toleranceNegative)
         {
-          calPuis = calPuisav - variation_rapide;
-        } // si la batterie est déchargée complètement
-  if (intensiteBatterie < 0)
-      { // si le courant est trop longtemps négatif
-        if (ineg < 100)
+         if (chargecomp==0) calPuis = calPuis/2; else calPuis -= variation_normale;
+         if ((ineg < 1000) && (intensiteBatterie < 0))
             {
               ineg++;
-              puisGradmax -= variation_normale;
-            }
-        if (ineg > 5)
+              //puisGradmax = calPuis-2*variation_rapide;
+              if (intensiteBatterie < -routeur.toleranceNegative) calPuis  -= variation_normale;
+            } 
+        if (ineg > 5) // autorisation de 5 mesures négatives avec baisse régulière
             {
               puisGradmax = 0;
-              calPuis = 0;
+              calPuis -=  2*variation_rapide;
             } // tolerance pic négatif
        }
   else
       {
         ineg = 0;
       }
-  //   if (Pince<-1)  { puisGradmax=3*calPuis/4; calPuis=3*calPuis/4;}// autorisation de tirer 500mA max sur les batteries
-  //  if (Pince<-1)  { puisGradmax=3*calPuis/4; calPuis=0;}// autorisation de tirer 500mA max sur les batteries
-
+ 
+  
   devprevious = dev;
-  if (capteurTension > routeur.seuilDemarrageBatterie + 0.2)
-        {
-          tesTension = 1;
-        }
-  if (capteurTension < routeur.seuilDemarrageBatterie - 0.5)
-        {
-          tesTension = 0;
-        }
-  if (tesTension == 0)
-        {
-          calPuis = 0;
-        }
+
+  // seuil de démarrage 
+  if (capteurTension > routeur.seuilDemarrageBatterie + 0.2)   tesTension = 1;
+  // seuil bas de batterie
+  if (capteurTension < routeur.seuilDemarrageBatterie - 0.5) tesTension = 0;
+  if (tesTension == 0) calPuis = 0;
+ 
   calPuis = min(max(0, calPuis), bridePuissance);
   return (calPuis);
 }
