@@ -219,7 +219,7 @@ function setSummarySettingsContent(settings) {
     content += "<div class='card card-2'>";
     content = addSwitch(settings["userSettings"]["marcheForcee"], "marcheForcee", "updatePercentageState", content);
     content = addSelectMarcheForcee(settings["userSettings"]["marcheForceePercentage"], content);
-    content = addInputNested({ setting: settings["userSettings"]["temporisation"], name: "temporisation", content, readonly: false, pattern: '\d' });
+    content = addInputNested({ setting: settings["userSettings"]["temporisation"], name: "temporisation", content, readonly: false, pattern: '[0-9]+' });
     content += "</div>";
     content += "<div style='display: flex; flex-direction: column; align-items: flex-end; margin: 1em 0;'>";
     content += "    <button class='btn btn-form' onclick='submitSummary()'><span>Valider</span></button>";
