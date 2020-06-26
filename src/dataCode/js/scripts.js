@@ -1,25 +1,27 @@
-function addInputNested(setting, name, content, readonly, type, min, max) {
+// infos contains keys : setting, name, content, readonly, pattern, min, max, type
+function addInputNested(infos) {
     let value;
+    const type = infos.type ? infos.type : 'text';
     let bornes = '';
-    if (setting.value instanceof Number || setting.value === 0) {
-        value = +setting.value.toFixed(5);
+    if (type === 'number') {
+        value = +infos.setting.value.toFixed(5);
     } else {
-        value = setting.value;
+        value = infos.setting.value;
     }
-    if (min && max) {
-        bornes = ' min="' + min + '" max="' + max + '" ';
+    if (infos.min && infos.max) {
+        bornes = ' min="' + infos.min + '" max="' + infos.max + '" ';
     }
-    content += "<div class='group'>";
-    content += "   <input step='0.000001' type='" + type + "'  value='" +
-        (value !== undefined ? value : '') + "' name='" + name + "' id='" + name + "' " + (readonly ? 'readonly' : '') + bornes + ">";
-    content += "    <span class='highlight'></span>";
-    content += "    <span class='bar'></span>";
-    content += "    <label class='label-input-text'>" + setting.label + "</label > ";
-    content += "</div>";
-    return content;
+    infos.content += "<div class='group'>";
+    infos.content += "   <input step='0.000001' type='" + type + "' pattern='" + infos.pattern + "' value='" +
+        (value !== undefined ? value : '') + "' name='" + infos.name + "' id='" + infos.name + "' " + (infos.readonly ? 'readonly' : '') + bornes + ">";
+    infos.content += "    <span class='highlight'></span>";
+    infos.content += "    <span class='bar'></span>";
+    infos.content += "    <label class='label-input-text'>" + infos.setting.label + "</label > ";
+    infos.content += "</div>";
+    return infos.content;
 }
 
-function addInput(settingValue, name, content, readonly, type, id) {
+function addInput(settingValue, name, content, readonly, pattern, id) {
     let value;
     if (settingValue instanceof Number) {
         value = settingValue.toFixed(5);
@@ -28,7 +30,7 @@ function addInput(settingValue, name, content, readonly, type, id) {
     }
 
     content += "<div class='group'>";
-    content += "   <input step='0.000001' type='" + type + "'  value='" + (value ? value : '') + "' name='" + name + "' id='" + id + "' " + (readonly ? 'readonly' : '') + ">";
+    content += "   <input step='0.000001' type='text' pattern='" + pattern + "' value='" + (value ? value : '') + "' name='" + name + "' id='" + id + "' " + (readonly ? 'readonly' : '') + ">";
     content += "    <span class='highlight'></span>";
     content += "    <span class='bar'></span>";
     content += "    <label class='label-input-text'>" + name + "</label > ";
@@ -136,16 +138,20 @@ function submitSummary() {
     }, 1500);
 }
 function submitSystem(needRestart) {
+    const coeffPince = document.getElementById('coeffPince').checkValidity();
+    const zeropince = document.getElementById('zeropince').checkValidity();
+    const coeffTension = document.getElementById('coeffTension').checkValidity();
+    const correctionTemperature = document.getElementById('correctionTemperature').checkValidity();
     const seuilDemarrageBatterieValid = document.getElementById('seuilDemarrageBatterie').checkValidity();
     const toleranceNegativeValid = document.getElementById('toleranceNegative').checkValidity();
+    const temperatureBasculementSortie2 = document.getElementById('temperatureBasculementSortie2').checkValidity();
+    const temperatureRetourSortie1 = document.getElementById('temperatureRetourSortie1').checkValidity();
+    const seuilMarche = document.getElementById('temperatureRetourSortie1').checkValidity();
+    const seuilArret = document.getElementById('seuilArret').checkValidity();
 
-    if (seuilDemarrageBatterieValid && toleranceNegativeValid) {
+    if (coeffPince && zeropince && coeffTension && correctionTemperature && seuilDemarrageBatterieValid && toleranceNegativeValid
+        && temperatureBasculementSortie2 && temperatureRetourSortie1 && seuilMarche && seuilArret) {
         const idToast = needRestart ? 'toastRestart' : 'toast';
-        if (needRestart) {
-
-        } else {
-
-        }
         document.getElementById(idToast).className = 'notif peek';
         document.getElementById(idToast).style.animation = 'none';
         setTimeout(function () {
@@ -174,7 +180,19 @@ function submitCommunication() {
             displayContent();
         }, 2000);
     }, 1000);
+}
 
+function reset() {
+    sessionStorage.removeItem("settings");
+    const xhttp = new XMLHttpRequest();
+    xhttp.open("POST", "reset", true);
+    xhttp.send();
+}
+
+function reboot() {
+    const xhttp = new XMLHttpRequest();
+    xhttp.open("POST", "reboot", true);
+    xhttp.send();
 }
 
 function setSummarySettingsContent(settings) {
@@ -182,26 +200,26 @@ function setSummarySettingsContent(settings) {
     content += "<div style='max-width: 25em;margin: auto;height: calc(100vh - 8em);'>";
     content += "<form id='summaryForm' method='post' action='/summarysettings'>";
     content += "<div class='card card-2'>";
-    content = addInputNested(settings["systemSettings"]["capteurTension"], 'capteurTension', content, true, 'number');
+    content = addInputNested({ setting: settings["systemSettings"]["capteurTension"], name: 'capteurTension', content, readonly: true, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
     settings['systemSettings']['intensiteBatterie']['value'] = settings['systemSettings']['intensiteBatterie']['value'].toFixed(2);
-    content = addInputNested(settings["systemSettings"]["intensiteBatterie"], 'intensiteBatterie', content, true, 'number');
-    content = addInputNested(settings["systemSettings"]["sortieActive"], "sortieActive", content, true, 'number');
+    content = addInputNested({ setting: settings["systemSettings"]["intensiteBatterie"], name: 'intensiteBatterie', content, readonly: true, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
+    content = addInputNested({ setting: settings["systemSettings"]["sortieActive"], name: "sortieActive", content, readonly: true, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
 
     const state = settings["userSettings"]["etatRelaisStatique"] ? "Oui" : "Non";
-    content = addInput(state, "Etat relais statique", content, true, 'text', 'etatRelaisStatique');
+    content = addInput(state, "Etat relais statique", content, true, '.+', 'etatRelaisStatique');
 
     content = addInput(Math.round(settings["systemSettings"]["temperatureEauChaude"]["value"]),
-        settings["systemSettings"]["temperatureEauChaude"]["label"], content, true, 'number', 'temperatureEauChaude');
+        settings["systemSettings"]["temperatureEauChaude"]["label"], content, true, '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)', 'temperatureEauChaude');
     content = addInput(Math.round(settings["systemSettings"]["puissanceDeChauffe"]["value"]),
-        settings["systemSettings"]["puissanceDeChauffe"]["label"], content, true, 'number', 'puissanceDeChauffe');
+        settings["systemSettings"]["puissanceDeChauffe"]["label"], content, true, '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)', 'puissanceDeChauffe');
 
-    content = addInputNested(settings["systemSettings"]["puissanceGradateur"], "puissanceGradateur", content, true, 'number');
-    content = addInputNested(settings["userSettings"]["seuilDemarrageBatterie"], "seuilDemarrageBatterie", content, true, 'number');
+    content = addInputNested({ setting: settings["systemSettings"]["puissanceGradateur"], name: "puissanceGradateur", content, readonly: true, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
+    content = addInputNested({ setting: settings["userSettings"]["seuilDemarrageBatterie"], name: "seuilDemarrageBatterie", content, readonly: true, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
     content += "</div>";
     content += "<div class='card card-2'>";
     content = addSwitch(settings["userSettings"]["marcheForcee"], "marcheForcee", "updatePercentageState", content);
     content = addSelectMarcheForcee(settings["userSettings"]["marcheForceePercentage"], content);
-    content = addInputNested(settings["userSettings"]["temporisation"], "temporisation", content, false, 'number');
+    content = addInputNested({ setting: settings["userSettings"]["temporisation"], name: "temporisation", content, readonly: false, pattern: '\d' });
     content += "</div>";
     content += "<div style='display: flex; flex-direction: column; align-items: flex-end; margin: 1em 0;'>";
     content += "    <button class='btn btn-form' onclick='submitSummary()'><span>Valider</span></button>";
@@ -215,26 +233,26 @@ function setSystemSettingsContent(settings) {
     content += "<div style='max-width: 25em;margin: auto; height: calc(100vh - 8em);'>";
     content += "<form id='systemForm' method='post' action='/systemsettings'>";
     content += "<div class='card card-2'>";
-    content = addInputNested(settings["userSettings"]["coeffPince"], "coeffPince", content, false, 'number');
-    content = addInputNested(settings["userSettings"]["zeropince"], "zeropince", content, false, 'number');
-    content = addInputNested(settings["userSettings"]["coeffTension"], "coeffTension", content, false, 'number');
-    content = addInputNested(settings["userSettings"]["correctionTemperature"], "correctionTemperature", content, false, 'number');
-    content = addInputNested(settings["userSettings"]["seuilDemarrageBatterie"], "seuilDemarrageBatterie", content, false, 'number', 0, 100);
-    content = addInputNested(settings["userSettings"]["toleranceNegative"], "toleranceNegative", content, false, 'number', 0, 1);
+    content = addInputNested({ setting: settings["userSettings"]["coeffPince"], name: "coeffPince", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
+    content = addInputNested({ setting: settings["userSettings"]["zeropince"], name: "zeropince", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
+    content = addInputNested({ setting: settings["userSettings"]["coeffTension"], name: "coeffTension", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
+    content = addInputNested({ setting: settings["userSettings"]["correctionTemperature"], name: "correctionTemperature", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
+    content = addInputNested({ setting: settings["userSettings"]["seuilDemarrageBatterie"], name: "seuilDemarrageBatterie", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)', min: 0, max: 100, type: 'number' });
+    content = addInputNested({ setting: settings["userSettings"]["toleranceNegative"], name: "toleranceNegative", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)', min: 0, max: 1, type: 'number' });
     content += "</div>";
 
     content += "<div class='card card-2'>";
     content = addSwitch(settings["userSettings"]["utilisation2Sorties"], "utilisation2Sorties", "update2Sortie", content);
     content = addSelectBasculementMode(settings["userSettings"]["basculementMode"], content, false);
-    content = addInputNested(settings["userSettings"]["temperatureBasculementSortie2"], "temperatureBasculementSortie2", content, false, 'number');
-    content = addInputNested(settings["userSettings"]["temperatureRetourSortie1"], "temperatureRetourSortie1", content, false, 'number');
+    content = addInputNested({ setting: settings["userSettings"]["temperatureBasculementSortie2"], name: "temperatureBasculementSortie2", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
+    content = addInputNested({ setting: settings["userSettings"]["temperatureRetourSortie1"], name: "temperatureRetourSortie1", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
     content += "</div>";
 
     content += "<div class='card card-2'>";
     content = addSwitch(settings["userSettings"]["relaisStatique"], "relaisStatique", 'updateRelaisStatique', content);
     content = addRadioButtonRelaisStatique(settings["userSettings"]["tensionOuTemperature"], content);
-    content = addInputNested(settings["userSettings"]["seuilMarche"], "seuilMarche", content, false, 'number');
-    content = addInputNested(settings["userSettings"]["seuilArret"], "seuilArret", content, false, 'number');
+    content = addInputNested({ setting: settings["userSettings"]["seuilMarche"], name: "seuilMarche", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
+    content = addInputNested({ setting: settings["userSettings"]["seuilArret"], name: "seuilArret", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
     content += "    <input type='hidden' name='needRestart' id='needRestart' value='false'></input>";
 
     content += "</div>";
@@ -256,8 +274,8 @@ function setCommunicationSettingsContent(settings) {
     content += "<form id='wifiForm' method='post' action='/wifisettings'>";
 
     content += "<div class='card card-2'><h2 style='margin: 0em 1em 0.5em .8em;color: #2f409f;font-weight: 700;'>WIFI</h2>";
-    content = addInput(settings["communicationSettings"]["ssid"], "ssid", content, false, 'text', 'ssid');
-    content = addInput(settings["communicationSettings"]["password"], "password", content, false, 'text', 'password');
+    content = addInput(settings["communicationSettings"]["ssid"], "ssid", content, false, '.+', 'ssid');
+    content = addInput(settings["communicationSettings"]["password"], "password", content, false, '.+', 'password');
     content += "</div>";
 
     content += "</form>";
@@ -265,16 +283,16 @@ function setCommunicationSettingsContent(settings) {
     content += "<form id='mqttForm' method='post' action='/mqttsettings'>";
 
     content += "<div class='card card-2'><h2 style='margin: 0em 1em 0.5em .8em;color: #2f409f;font-weight: 700;'>MQTT</h2>";
-    content = addInput(settings['communicationSettings']['mqttServer'], 'mqttServer', content, false, 'text', 'mqttServer');
-    content = addInput(settings['communicationSettings']['mqttPort'], 'mqttPort', content, false, 'number', 'mqttPort');
-    content = addInput(settings['communicationSettings']['mqttUser'], 'mqttUser', content, false, 'text', 'mqttUser');
-    content = addInput(settings['communicationSettings']['mqttPassword'], 'mqttPassword', content, false, 'text', 'mqttPassword');
-    content = addInput(settings['communicationSettings']['mqttopic'], 'mqttopic', content, false, 'text', 'mqttopic');
-    content = addInput(settings['communicationSettings']['mqttopicInput'], 'mqttopicInput', content, false, 'text', 'mqttopicInput');
-    content = addInput(settings['communicationSettings']['mqttopicParam1'], 'mqttopicParam1', content, false, 'text', 'mqttopicParam1');
-    content = addInput(settings['communicationSettings']['mqttopicParam2'], 'mqttopicParam2', content, false, 'text', 'mqttopicParam2');
-    content = addInput(settings['communicationSettings']['mqttopicParam3'], 'mqttopicParam3', content, false, 'text', 'mqttopicParam3');
-    content = addInput(settings['communicationSettings']['mqttopicPzem1'], 'mqttopicPzem1', content, false, 'text', 'mqttopicPzem1');
+    content = addInput(settings['communicationSettings']['mqttServer'], 'mqttServer', content, false, '.+', 'mqttServer');
+    content = addInput(settings['communicationSettings']['mqttPort'], 'mqttPort', content, false, '[0-9]+', 'mqttPort');
+    content = addInput(settings['communicationSettings']['mqttUser'], 'mqttUser', content, false, '.+', 'mqttUser');
+    content = addInput(settings['communicationSettings']['mqttPassword'], 'mqttPassword', content, false, '.+', 'mqttPassword');
+    content = addInput(settings['communicationSettings']['mqttopic'], 'mqttopic', content, false, '.+', 'mqttopic');
+    content = addInput(settings['communicationSettings']['mqttopicInput'], 'mqttopicInput', content, false, '.+', 'mqttopicInput');
+    content = addInput(settings['communicationSettings']['mqttopicParam1'], 'mqttopicParam1', content, false, '.+', 'mqttopicParam1');
+    content = addInput(settings['communicationSettings']['mqttopicParam2'], 'mqttopicParam2', content, false, '.+', 'mqttopicParam2');
+    content = addInput(settings['communicationSettings']['mqttopicParam3'], 'mqttopicParam3', content, false, '.+', 'mqttopicParam3');
+    content = addInput(settings['communicationSettings']['mqttopicPzem1'], 'mqttopicPzem1', content, false, '.+', 'mqttopicPzem1');
     content += "</div>";
 
     content += "</form>";
@@ -283,6 +301,30 @@ function setCommunicationSettingsContent(settings) {
     content += "</div></div>";
 
     document.getElementById('content').innerHTML = content;
+}
+
+function setActionContent(settings) {
+    let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Action sur l ESP</h1></div>';
+    content += "<div style='max-width: 25em;margin: auto; height: calc(100vh - 8em);'>";
+    content += "<div style='display: flex; flex-direction: column; align-items: flex-end; margin: 1em 0;'>";
+    content += "    <button style='width:100%;' class='btn btn-form' onclick='getConfirmation(`Etes vous sur de vouloir redémarrer l ESP ?`, reboot)'><span>Reboot l'ESP</span></button>";
+    content += "</div>";
+    content += "<div style='display: flex; flex-direction: column; align-items: flex-end; margin: 1em 0;'>";
+    content += "    <button style='width:100%;' class='btn btn-form' onclick='getConfirmation(`Etes vous sur de vouloir réinitialiser les propriétés ?`, reset)'><span>Réinitialise les propriétés</span></button>";
+    content += "</div>";
+    content += "</div>";
+
+    document.getElementById('content').innerHTML = content;
+}
+
+function getConfirmation(question, callback) {
+    var retVal = confirm(question);
+    if (retVal == true) {
+        callback();
+        return true;
+    } else {
+        return false;
+    }
 }
 
 function displaySettingsContent(callback) {
@@ -348,6 +390,7 @@ function displayContent() {
     document.getElementById('summaryfooter').style.fontWeight = '400';
     document.getElementById('systemfooter').style.fontWeight = '400';
     document.getElementById('communicationfooter').style.fontWeight = '400';
+    document.getElementById('actionfooter').style.fontWeight = '400';
     //document.getElementById('chartfooter').style.fontWeight = '400';
     if (window.location.href.endsWith('system')) {
         document.getElementById('systemfooter').style.fontWeight = '700';
@@ -358,6 +401,9 @@ function displayContent() {
     } else if (window.location.href.endsWith('communication')) {
         document.getElementById('communicationfooter').style.fontWeight = '700';
         displaySettingsContent(setCommunicationSettingsContent);
+    } else if (window.location.href.endsWith('action')) {
+        document.getElementById('actionfooter').style.fontWeight = '700';
+        displaySettingsContent(setActionContent);
     } else {
         document.getElementById('summaryfooter').style.fontWeight = '700';
         displaySettingsContent(setSummarySettingsContent);

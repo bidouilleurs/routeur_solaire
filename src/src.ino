@@ -224,7 +224,7 @@ void loop()
   Serial.print(',');
   Serial.print(intensiteBatterie);
   Serial.print(',');
-  Serial.print(56 / 5);
+  Serial.print(routeur.seuilDemarrageBatterie / 5);
   Serial.print(',');
   Serial.println(capteurTension / 5);
 //  Serial.print("zero");  Serial.println(routeur.zeropince);

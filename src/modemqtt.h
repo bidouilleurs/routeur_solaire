@@ -15,6 +15,7 @@ private:
   void mqtt_publish(int a);
   static void callback(char *topic, byte *message, unsigned int length);
   void mqtt_subcribe();
+  void connexion();
 };
 
 extern RAMQTTClass RAMQTT;

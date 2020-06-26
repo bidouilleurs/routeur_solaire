@@ -48,4 +48,12 @@ void RAPrgEEpromClass::restore_param()
   EEPROM.get(1, routeur);
 }
 
+void RAPrgEEpromClass::reset()
+{
+  EEPROM.writeByte(0, 0); // valeur pour la premiere sauvegarde
+  EEPROM.put(1, routeur);
+  EEPROM.commit(); // pour liberer la memoire
+  paramchange = 1; // communication au format mqtt pour le reseau domotique 1 pour l'envoi des parametres}
+  resetEsp = 1;
+}
 RAPrgEEpromClass RAPrgEEprom;

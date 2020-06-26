@@ -1,8 +1,6 @@
 tasks:
   - before: pip3 install -U platformio
-  - command: git clean -f
-  - command: git fetch
-  - command: git pull
-  - command: pio clean 
-  - command: pio run -t uploadfs
-  - command: pio run -t upload
+  - before: git clean -f
+  - before: git fetch
+  - before: git pull
+  - command: pio run -e routeur_solaire

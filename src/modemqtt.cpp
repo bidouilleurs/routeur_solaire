@@ -15,11 +15,40 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 int affpub = 0;
 int testconnect = 0; //  permet de savoir si la connection est faite
+int limitConnect = 3;
+void RAMQTTClass::connexion()
+{
+  testconnect = 0;
+  while ((testconnect < limitConnect) && (!client.connected())) // connection au broker 'limitConnect' tentatives autorisée
+  {
+    testconnect++;
+    Serial.print(F("Connection au broker MQTT..."));
+    if (client.connect("ESP32Client", routeur.mqttUser, routeur.mqttPassword))
+    {
+      Serial.println(F("connection active"));
+    }
+    else
+    {
+      Serial.println(F("Erreur de connection "));
+    }
+#ifdef EcranOled
+    RAAfficheur.cls();
+    delay(100);
+    RAAfficheur.affiche(20, "Err Brokeur");
+    RAAfficheur.affiche(35, String(testconnect));
+#endif
+    delay(100);
+  }
+  if (testconnect >= limitConnect) // connection échouée au broker
+  {
+    Serial.println(F("Broker Mqtt indisponible"));
+    MQTT = false; // pas de connection mqtt
+  }
+}
 
 void RAMQTTClass::setup()
 {
 
- 
   if (!SAP)
   {
     WiFi.begin(routeur.ssid, routeur.password); // connection au reseau 20 tentatives autorisées
@@ -38,32 +67,7 @@ void RAMQTTClass::setup()
       client.setCallback(callback);
       Serial.print(F("le broker est  "));
       Serial.println(routeur.mqttServer);
-      testconnect = 0;
-      while ((testconnect < 5) && (!client.connected()))
-      { // connection au broker 5 tentatives autorisée
-        testconnect++;
-        Serial.print(F("Connection au broker MQTT..."));
-        if (client.connect("ESP32Client", routeur.mqttUser, routeur.mqttPassword))
-        {
-          Serial.println(F("connection active"));
-        }
-        else
-        {
-          Serial.println(F("Erreur de connection "));
-        }
- //       Serial.print(client.state());
-   #ifdef EcranOled
-    RAAfficheur.cls();delay(100);
-    RAAfficheur.affiche(20,"Err Brokeur");
-    RAAfficheur.affiche(35,String(testconnect));
-  #endif       
-    delay(100);
-      }
-      if (testconnect >= 5) // connection échouée au broker
-      {
-        Serial.println(F("Broker Mqtt indisponible"));
-        MQTT = false; // pas de connection mqtt
-      }
+      RAMQTT.connexion();
     }
     else
     {
@@ -142,18 +146,17 @@ void RAMQTTClass::commande_param(String mesg)
     if (com == 0)
     {
       strcpy(routeur.tensionOuTemperature, "");
-        routeur.relaisStatique = false;
+      routeur.relaisStatique = false;
     }
     if (com == 1)
     {
       strcpy(routeur.tensionOuTemperature, "D");
-        routeur.relaisStatique = true;
-
+      routeur.relaisStatique = true;
     }
     if (com == 2)
     {
       strcpy(routeur.tensionOuTemperature, "V");
-        routeur.relaisStatique = true;
+      routeur.relaisStatique = true;
     }
   }
   if (mesg.substring(0, 3).equals("tmp")) // reception ex: "tmp60" 60 minute de marche forcée
@@ -214,14 +217,21 @@ void RAMQTTClass::mqtt_publish(int a)
   doc["Temperature"] = temperatureEauChaude;
   doc["puissanceMono"] = puissanceDeChauffe;
   size_t n = serializeJson(doc, buffer); // calcul de la taille du json
-  buffer[n - 1] = '}';   buffer[n] = 0; // fermeture de la chaine json
+  buffer[n - 1] = '}';
+  buffer[n] = 0; // fermeture de la chaine json
   Serial.println(buffer);
   if (client.connected())
   {
-    if (client.publish(routeur.mqttopic, buffer, n) == true)     {      Serial.println(F("Success sending message"));
-    }    else    {      Serial.println(F("Error sending message"));    }
+    if (client.publish(routeur.mqttopic, buffer, n) == true)
+    {
+      Serial.println(F("Success sending message"));
+    }
+    else
+    {
+      Serial.println(F("Error sending message"));
+    }
   }
-   doc.clear();
+  doc.clear();
 
   client.loop();
   if (a == 0)
@@ -239,11 +249,18 @@ void RAMQTTClass::mqtt_publish(int a)
   buffer[n - 1] = '}';
   buffer[n] = 0; // fermeture de la chaine json
   Serial.println(buffer);
-  if (client.connected())   {
-    if (client.publish(routeur.mqttopicParam1, buffer, n) == true)     {       Serial.println(F("Success sending message param"));
-    }     else     {       Serial.println(F("Error sending message param"));     }
+  if (client.connected())
+  {
+    if (client.publish(routeur.mqttopicParam1, buffer, n) == true)
+    {
+      Serial.println(F("Success sending message param"));
+    }
+    else
+    {
+      Serial.println(F("Error sending message param"));
+    }
   }
-   doc2.clear();
+  doc2.clear();
 
   StaticJsonDocument<capacity> doc3;
   doc3["sortie2"] = routeur.utilisation2Sorties;
@@ -252,23 +269,29 @@ void RAMQTTClass::mqtt_publish(int a)
   doc3["temporisation"] = temporisation;
   doc3["sortieActive"] = sortieActive;
   n = serializeJson(doc3, buffer); // calcul de la taille du json
-  buffer[n - 1] = '}';  buffer[n] = 0; // fermeture de la chaine json
+  buffer[n - 1] = '}';
+  buffer[n] = 0; // fermeture de la chaine json
   Serial.println(buffer);
   if (client.connected())
   {
-    if (client.publish(routeur.mqttopicParam2, buffer, n) == true)    {       Serial.println(F("Success sending message param"));
-    }     else     {       Serial.println(F("Error sending message param"));     }
+    if (client.publish(routeur.mqttopicParam2, buffer, n) == true)
+    {
+      Serial.println(F("Success sending message param"));
+    }
+    else
+    {
+      Serial.println(F("Error sending message param"));
+    }
   }
-   doc3.clear();
-  
+  doc3.clear();
+
   StaticJsonDocument<capacity> doc4;
-  doc4["sortieRelaisTemp"] = (routeur.relaisStatique && (routeur.tensionOuTemperature[0]=='D'));
-  doc4["sortieRelaisTens"] = (routeur.relaisStatique && (routeur.tensionOuTemperature[0]=='V'));
+  doc4["sortieRelaisTemp"] = (routeur.relaisStatique && (routeur.tensionOuTemperature[0] == 'D'));
+  doc4["sortieRelaisTens"] = (routeur.relaisStatique && (routeur.tensionOuTemperature[0] == 'V'));
   doc4["relaisMax"] = routeur.seuilMarche;
   doc4["relaisMin"] = routeur.seuilArret;
   doc4["Forcage_1h"] = marcheForcee;
 
-  
   n = serializeJson(doc4, buffer); // calcul de la taille du json
   buffer[n - 1] = '}';
   buffer[n] = 0; // fermeture de la chaine json
@@ -284,7 +307,7 @@ void RAMQTTClass::mqtt_publish(int a)
       Serial.println(F("Error sending message param"));
     }
   }
-   doc4.clear();
+  doc4.clear();
 
   client.loop();
 
@@ -315,7 +338,7 @@ void RAMQTTClass::mqtt_publish(int a)
       Serial.println(F("Error sending message"));
     }
   }
-   doc5.clear();
+  doc5.clear();
 
   /********************* fin d'envoie ***********************/
   client.loop();
@@ -324,26 +347,40 @@ void RAMQTTClass::mqtt_publish(int a)
 
 void RAMQTTClass::loop()
 {
-  if ((!SAP) && (WiFi.status() != WL_CONNECTED))  { resetEsp = 1; return; }
-  if ((testwifi == 0) && (!SAP)  && (!serverOn))
+  if ((!SAP) && (WiFi.status() != WL_CONNECTED))
   {
-//    if ((WiFi.status() == WL_CONNECTED) && (client.connected()))
-    if (WiFi.status() == WL_CONNECTED) 
-    {                  // teste le wifi
-      bool mqttav=MQTT;
-      if (!client.connected()) MQTT=false; 
-      if(MQTT) mqtt_subcribe(); // lecture de information sur mqtt output/solar
-                       //  (1) avec les parametres
+    resetEsp = 1;
+    return;
+  }
+  if ((testwifi == 0) && (!SAP) && (!serverOn))
+  {
+    //    if ((WiFi.status() == WL_CONNECTED) && (client.connected()))
+    if (WiFi.status() == WL_CONNECTED)
+    { // teste le wifi
+      // bool mqttav = MQTT;
+      if (!client.connected() && MQTT)
+      {
+        RAMQTT.connexion();
+      }
+      if (MQTT)
+      {
+        mqtt_subcribe();
+      }
+
+      // lecture de information sur mqtt output/solar
+      //  (1) avec les parametres
       //  (0) seulement les indispensables tension courant ..
       if (paramchange == 1)
       {
-        if(MQTT) mqtt_publish(1);
+        if (MQTT)
+          mqtt_publish(1);
       }
       else
       {
-        if(MQTT) mqtt_publish(0); // communication au format mqtt pour le reseau domotique
+        if (MQTT)
+          mqtt_publish(0); // communication au format mqtt pour le reseau domotique
       }
-      MQTT=mqttav;
+      // MQTT = mqttav;
       paramchange = 0;
     }
     else
@@ -358,8 +395,6 @@ void RAMQTTClass::loop()
     if (testwifi > 500)
       resetEsp = 1; // si perte de signal trop longtemps reset esp32
   }
-
-  
 }
 
 RAMQTTClass RAMQTT;

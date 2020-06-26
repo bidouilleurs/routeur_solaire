@@ -14,7 +14,6 @@ public:
     void loop();
     void coupure_reseau();
 
-
 private:
     DynamicJsonDocument readSettingsFile();
     void saveResumeSettings(String jsonResult);
@@ -23,6 +22,8 @@ private:
     void saveSystemSettings(String jsonResult);
     void getNewSettings(WiFiClient client);
     void getSettings(WiFiClient client);
+    int hexa(char a);
+    String convert(String a);
 };
 
 extern RAServerClass RAServer;

@@ -225,6 +225,35 @@ void RAServerClass::getSettings(WiFiClient client)
     client.println(result);
 }
 
+int RAServerClass::hexa(char a)
+{
+    if ((a >= '0') && (a <= '9'))
+        return (int(a - '0'));
+    if ((a >= 'A') && (a <= 'F'))
+        return (int(a - 'A') + 10);
+    return (-1);
+}
+
+String RAServerClass::convert(String a)
+{
+    String b = "";
+    int pos = a.indexOf('%');
+    while (pos != -1)
+    {
+        int icar = 0;
+        b = "%";
+        b += a.charAt(pos + 1);
+        icar = 16 * hexa(a.charAt(pos + 1));
+        b += a.charAt(pos + 2);
+        icar += hexa(a.charAt(pos + 2));
+        String c = "";
+        c += char(icar);
+        a.replace(b, c);
+        pos = a.indexOf('%');
+    }
+    return (a);
+}
+
 void RAServerClass::loop()
 {
     if ((!SAP) && (WiFi.status() != WL_CONNECTED))
@@ -278,6 +307,7 @@ void RAServerClass::loop()
                 }
                 requestBody += "\"}";
                 requestBody.replace("%2F", "/");
+                requestBody = convert(requestBody);
                 Serial.println(requestBody);
                 if (req.startsWith("POST /systemsettings"))
                 {
@@ -294,6 +324,14 @@ void RAServerClass::loop()
                 else if (req.startsWith("POST /summarysettings"))
                 {
                     saveResumeSettings(requestBody);
+                }
+                else if (req.startsWith("POST /reboot"))
+                {
+                    restartEsp = true;
+                }
+                else if (req.startsWith("POST /reset"))
+                {
+                    RAPrgEEprom.reset();
                 }
                 client.println("HTTP/1.1 204 OK");
             }

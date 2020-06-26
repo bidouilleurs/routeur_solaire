@@ -11,6 +11,7 @@ public:
   void sauve_param();
   void restore_param();
   void close_param();
+  void reset();
 };
 extern RAPrgEEpromClass RAPrgEEprom;
 
