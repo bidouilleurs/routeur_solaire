@@ -222,39 +222,17 @@ int RARegulationClass::regulGrad(int dev)
 /**************************************/
 unsigned long tempdepart;
 int tempo = 0;
+int tempo2 = 0;
+extern int calPuis;
 
 int RARegulationClass::pilotage()
 {
   // pilotage du 2eme triac
-#ifndef MesureTemperature
-#ifdef Sortie2
-#ifdef Pzem04t
-  if (routeur.utilisation2Sorties)
-  {
-    if ((puissanceDeChauffe == 0) && (puissanceGradateur > 100))
-      tempo2 = ++;
-    else
-      tempo2 = 0; // demarre la tempo chauffe-eau temp atteinte
-    if (tempo2 > 10)
-    {
-      choixSortie = 1;
-      sortieActive = 2;
-      tempo2++;
-    } // après 2s avec i=0 bascule sur triac2
-    if (tempo2 > 200)
-    {
-      choixSortie = 0;
-      sortieActive = 1;
-      tempo2 = 0;
-    } // après qques minutes bascule sur 1er triac
-  }
-#endif
-#endif
-#endif
+
 
 #ifdef MesureTemperature
 #ifdef Sortie2
-  if (routeur.utilisation2Sorties)
+  if (routeur.utilisation2Sorties)  
   {
     if ((temperatureEauChaude > routeur.temperatureBasculementSortie2) && (choixSortie == 0))
     {
@@ -262,7 +240,7 @@ int RARegulationClass::pilotage()
       sortieActive = 2;
     }
     // commande du gradateur2
-    if ((temperatureEauChaude < routeur.temperatureRetourSortie1) && (choixSortie == 1))
+    if ((temperatureEauChaude < routeur.temperatureRetourSortie1) && (choixSortie == 1) && (tempo2==0))
     {
       choixSortie = 0;
       sortieActive = 1;
@@ -276,31 +254,61 @@ int RARegulationClass::pilotage()
   }
 #endif
 
+
   if (routeur.relaisStatique && strcmp(routeur.tensionOuTemperature, "D") == 0)
   {
     if (temperatureEauChaude > routeur.seuilMarche)
     {
-      digitalWrite(pinRelais, LOW); // mise à un du relais statique
+      digitalWrite(pinRelais, HIGH); // mise à un du relais statique
       etatRelaisStatique = true;
     }
     if (temperatureEauChaude < routeur.seuilArret)
     {
-      digitalWrite(pinRelais, HIGH); // mise à zéro du relais statique
+      digitalWrite(pinRelais, LOW); // mise à zéro du relais statique
       etatRelaisStatique = false;
     }
   }
 #endif
 
+#ifdef Sortie2
+#ifdef Pzem04t
+  if (routeur.utilisation2Sorties)
+  {
+    if (choixSortie==0)
+    {
+    if ((puissanceDeChauffe < 5) && (puissanceGradateur > 100) )
+      tempo2++;
+    else
+      tempo2 = 0; // demarre la tempo chauffe-eau temp atteinte
+    }
+
+    if (tempo2 > 10)
+    {
+      choixSortie = 1;
+      sortieActive = 2;
+      tempo2++;
+    } // après 2s avec i=0 bascule sur triac2
+    if (tempo2 > 200)
+    {
+      choixSortie = 0;
+      sortieActive = 1;
+      tempo2 = 0;
+      calPuis=0;
+    } // après qques minutes bascule sur 1er triac
+  }
+#endif
+#endif
+
   if (routeur.relaisStatique && strcmp(routeur.tensionOuTemperature, "V") == 0)
   {
-    if (capteurTension > routeur.seuilMarche)
+    if (capteurTension < routeur.seuilMarche)
     {
-      digitalWrite(pinRelais, LOW); // mise à un du relais statique
+      digitalWrite(pinRelais, HIGH); // mise à un du relais statique
       etatRelaisStatique = true;
     }
-    if (capteurTension < routeur.seuilArret)
+    if (capteurTension > routeur.seuilArret)
     {
-      digitalWrite(pinRelais, HIGH); // mise à zéro du relais statique
+      digitalWrite(pinRelais, LOW); // mise à zéro du relais statique
       etatRelaisStatique = false;
     }
   }

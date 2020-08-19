@@ -94,7 +94,7 @@ void setup()
   pinMode(pinSortie2, OUTPUT);
   digitalWrite(pinSortie2, LOW); // mise à zéro du triac de la sortie 2
   pinMode(pinRelais, OUTPUT);
-  digitalWrite(pinRelais, HIGH); // mise à zéro du relais statique
+  digitalWrite(pinRelais, LOW); // mise à zéro du relais statique
   pinMode(pinTemp, INPUT);
   pinMode(pinTension, INPUT);
   pinMode(pinPotentiometre, INPUT);
@@ -153,16 +153,17 @@ void setup()
 }
 
 int iloop = 0; // pour le parametrage par niveau
-
+extern int calPuis;
+float mesureAc=0;
 
 void loop()
 {
   RATriac.watchdog(1);                  //chien de garde à 4secondes dans timer0
   RAMesure.mesurePinceTension(700, 20); // mesure le courant et la tension avec 2 boucles de filtrage (700,20)
-
+ // mesureAc=RAMesure.mesurePinceAC(pinPotentiometre,1,false);
 
 #ifdef simulation
-  if (!modeparametrage)RASimulation.imageMesure(0); // permet de faire des essais sans matériel
+  if (!modeparametrage) RASimulation.imageMesure(0); // permet de faire des essais sans matériel
   Serial.print("Mode simulation");
 #endif
 
@@ -172,20 +173,19 @@ void loop()
     RAMesure.mesure_puissance();  // mesure la puissance sur le pzem004t
 
     int dev = RARegulation.mesureDerive(intensiteBatterie, 0.2); // donne 1 si ça dépasse l'encadrement haut et -1 si c'est en dessous de l'encadrement (Pince,0.2)
-    if (marcheForcee)
-    {
-      RARegulation.pilotage();
-    }
-    else
-    {                                                   // pilotage à distance
-      puissanceGradateur = RARegulation.regulGrad(dev); // calcule l'augmentation ou diminution du courant dans le ballon en fonction de la deviation
-    }
+    
+    if (mesureAc<0.3)
+              {
+                RARegulation.pilotage(); // pilotage à distance
+                 puissanceGradateur = RARegulation.regulGrad(dev); // calcule l'augmentation ou diminution du courant dans le ballon en fonction de la deviation
+              }
+               else    { calPuis=0; puissanceGradateur = 0; }
   }
 
   if (modeparametrage)
   {
-    int potar = map(analogRead(pinPotentiometre), 0, 4095, 0, 1000); // controle provisoire avec pot
-/*    iloop++;
+//    int potar = map(analogRead(pinPotentiometre), 0, 4095, 0, 1000); // controle provisoire avec pot
+    iloop++;
     if (iloop < 10)
       puissanceGradateur = 1;
     else if (iloop < 20)
@@ -200,10 +200,10 @@ void loop()
       puissanceGradateur = 1000;
     else
       iloop = 0;
-    */   if (potar>10) puissanceGradateur=potar;
+  /*   if (potar>10) puissanceGradateur=potar;
        else  if (potar<2) puissanceGradateur=0;
                     else puissanceGradateur=1; // priorité au potensiometre                    // priorité au potensiometre
-    
+    */
     Serial.println();
     Serial.print("Courant ");
     Serial.println(intensiteBatterie);
@@ -225,6 +225,10 @@ void loop()
   Serial.print(intensiteBatterie);
   Serial.print(',');
   Serial.print(routeur.seuilDemarrageBatterie / 5);
+  Serial.print(',');
+  Serial.print(-routeur.toleranceNegative);
+  Serial.print(',');
+  Serial.print(mesureAc);
   Serial.print(',');
   Serial.println(capteurTension / 5);
 //  Serial.print("zero");  Serial.println(routeur.zeropince);
