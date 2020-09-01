@@ -272,7 +272,8 @@ int RARegulationClass::pilotage()
 
 #ifdef Sortie2
 #ifdef Pzem04t
-  if (routeur.utilisation2Sorties)
+ 
+  if ((routeur.utilisation2Sorties)  && (!marcheForcee))
   {
     if (choixSortie==0)
     {
@@ -319,7 +320,8 @@ int RARegulationClass::pilotage()
   }
   if ((marcheForcee) && (tempo == 1))
   {
-    puissanceGradateur = marcheForceePercentage * 9; //limitation 90%
+   puissanceGradateur = marcheForceePercentage * 9; //limitation 90%
+   calPuis=puissanceGradateur;
     if (millis() > tempdepart + 60000)
     { // decremente toutes les minutes
       tempdepart = millis();
