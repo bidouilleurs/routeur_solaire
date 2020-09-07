@@ -176,9 +176,12 @@ void loop()
     
     if (mesureAc<0.3)
               {
+                
+              
+                puissanceGradateur = RARegulation.regulGrad(dev); // calcule l'augmentation ou diminution du courant dans le ballon en fonction de la deviation
                 RARegulation.pilotage(); // pilotage à distance
-                 puissanceGradateur = RARegulation.regulGrad(dev); // calcule l'augmentation ou diminution du courant dans le ballon en fonction de la deviation
               }
+
                else    { calPuis=0; puissanceGradateur = 0; }
   }
 
