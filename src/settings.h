@@ -32,8 +32,8 @@ struct param
     float seuilMarche = 50;                               // température ou tension de déclenchement du relais
     float seuilArret = 45;                                // température ou tension de déclenchement du relais
     char tensionOuTemperature[2] = "V";                   // Indique si le seuil est en Volts ou en Degrés
-    char ssid[30] = "Livebox-12B2";                      // ssid de la box internet
-    char password[50] = "177D29243CAF5AFEDD2C93DC9D"; // mot de passe
+    char ssid[30] = "Livebox-xxxx";                      // ssid de la box internet
+    char password[50] = "5AFEDD2C93DC9D"; // mot de passe
                                                           // en mode serveur l'ip est 192.168.4.1'
                                                           // ssid , "routeur_esp32"
                                                           // password , "adminesp32"
