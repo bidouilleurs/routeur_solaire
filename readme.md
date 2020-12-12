@@ -7,13 +7,13 @@
   * [Parametrage le fonctionnement du serveur web](#Parametrage-le-fonctionnement-du-serveur-web)
   * [Parametrage pour le fonctionnement MQTT](#Parametrage-pour-le-fonctionnement-MQTT)
 * [Flash sur ESP](#Flash-sur-ESP)
-  * [PlatformIO filaire](#Via-platformIO-filaire)
-  * [PlatformIO OTA](#Via-platformIO-OTA)
+  * [PlatformIO filaire](#PlatformIO-filaire)
+  * [PlatformIO OTA](#PlatformIO-OTA)
 * [Developpement](#Developpement)
 
 
-## Paramétrage
-### Paramétrage pour l'algorithme
+## Parametrage
+### Parametrage pour l algorithme
 | Champs      |    Fichier | default |  description |
 | ------------- | :---------: |---------: |---------:|
 | zeropince  |   settings.h    | -100 | valeur mesurer à zéro |
@@ -32,7 +32,7 @@
 | basculementMode  |   settings.h   | "T" |  Choix du mode de basculement : T->température, P-> Puissance zero|
 | actif  |   settings.h   | true | permet d'activer ou désactiver le système
 
-### Fonctionnalités optionnelles du système
+### Fonctionnalites optionnelles du systeme
 Les champs décrits ci-dessous permettent d'activer/désactiver certaines options
 Ils sont présent dans le fichier settings.h. Si l'option ne vous interesse pas, il faut mettre la ligne en commentaire (commencer la ligne par '//')
 Pour activer l'option :
@@ -56,7 +56,7 @@ Pour **ne pas** activer l'option
 | Simulation      |     Simulation de données pour des tests, dans le cas ou le système n'est pas branché |
 | OTA      |    Permet la mise à jour par OTA (over the air) |
 
-### Serveur web
+### Parametrage le fonctionnement du serveur web
 Le serveur web permet de faire les régalges depuis une page web. Pour cela, Deux possibités son disponible :
 * connecter l'esp au wifi domestic pour y accéder depuis un navigateur web d'un appareil connecté sur le réseau
 * Mettre l'ESP en mode point d'accès (SAP) et connecter son smartphone sur le wifi de l'esp (routeur_esp32)
@@ -69,7 +69,7 @@ Dans le cas ou la connexion wifi échoue, l'ESP passe automatiquement en mode po
 | password  |   settings.h   | "" | Mot de passe de la box internet  |
 | SAP  |   src.ino   | false | force l'ESP en point d'accès (en dehors du réseau domestique -> ssid: "routeur_esp32"; password : "adminesp32" |
 
-### Paramétrage pour le fonctionnement MQTT
+### Parametrage pour le fonctionnement MQTT
 
 Le MQTT permet de recevoir les infos de l'ESP sur un broker MQTT, et de piloter le routeur solaire.
 Une connexion au wifi est obligatoire (cf. Serveur web)
@@ -146,7 +146,7 @@ Cliquer sur **Default** puis choisissez **env:routeur_solaire_OTA**
 
 Ensuite flasher comme indiqué dans la section précedente
 
-## Développement
+## Developpement
 Pour changer des fonctionnalités, vous pouvez éditer le code.
 Si vous souhaitez éditer le code du serveur web, il faut modifier les fichiers présents dans le dossier "dataCode" puis, une fois les changements effectués, minifier le code dans le dossier "data".
 Outils en ligne pour minimifier le code : 
