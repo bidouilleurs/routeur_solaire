@@ -1,6 +1,7 @@
 # Réseautonome - Routeur offgrid
 
 ## Sommaire
+* [Tutoriels videos](#Tutoriels-videos)
 * [Parametrage](#Parametrage)
   * [Parametrage pour l algorithme](#Parametrage-pour-l-algorithme)
   * [Fonctionnalites optionnelles du systeme](#Fonctionnalites-optionnelles-du-systeme)
@@ -12,6 +13,36 @@
 * [Developpement](#Developpement)
 
 
+## Tutoriels videos
+
+Fonctionnement
+
+[![Alt text](https://img.youtube.com/vi/k4qtnl1ytJM/0.jpg)](https://www.youtube.com/watch?v=k4qtnl1ytJM)
+
+Présentation du prototype
+
+[![Alt text](https://img.youtube.com/vi/r0o6uWTO2Bw/0.jpg)](https://www.youtube.com/watch?v=r0o6uWTO2Bw)
+
+Démonstration
+
+[![Alt text](https://img.youtube.com/vi/PUMbBfnpi2k/0.jpg)](https://www.youtube.com/watch?v=PUMbBfnpi2k)
+
+Présentation du serveur web
+
+[![Alt text](https://img.youtube.com/vi/cQqW8xrT0VU/0.jpg)](https://www.youtube.com/watch?v=cQqW8xrT0VU)
+
+Explication Hardware
+
+[![Alt text](https://img.youtube.com/vi/aPKQgpmWH7U/0.jpg)](https://www.youtube.com/watch?v=aPKQgpmWH7U)
+
+Assemblage partiel Hardware
+
+[![Alt text](https://img.youtube.com/vi/y1rwfJ6BLlo/0.jpg)](https://www.youtube.com/watch?v=y1rwfJ6BLlo)
+
+Explication de corrections mineures
+
+[![Alt text](https://img.youtube.com/vi/yLEv1khMI3Y/0.jpg)](https://www.youtube.com/watch?v=yLEv1khMI3Y)
+
 ## Parametrage
 ### Parametrage pour l algorithme
 | Champs      |    Fichier | default |  description |
@@ -20,7 +51,7 @@
 | coeffPince  |   settings.h   |  0.0294 | Calculer le coefficient |
 | coeffTension  |   settings.h    | 0.0177533 | diviseur de tension |
 | seuilDemarrageBatterie  |   settings.h   | 56 | seuil de mise en marche de la regulation dans le ballon |
-| toleranceNegative  |   settings.h    | 0.5 | autorisation de 300mA négative au moment de la charge complète |
+| toleranceNegative  |   settings.h    | 0.5 | autorisation de 500mA négative au moment de la charge complète |
 | utilisation2Sorties  |   settings.h   | false | validation de la sortie 2eme gradateur |
 | temperatureBasculementSortie2  |   settings.h    | 60 | température pour démarrer la regul sur la sortie 2 |
 | temperatureRetourSortie1  |   settings.h   | 45 |température pour rebasculer sur le premier gradateur  |
@@ -118,16 +149,19 @@ Depuis vscodium :
 file -> préference -> extension, rechercher et installer platformIO IDE
 
 
-#### Serveur web dans le spiff
-Via l'onglet Plateformio qui est disponible sur la gauche de vscodium (la barre latérale, l'icone qui ressemble à une fourmi) :  
-Cliquer sur "Upload File System image"
+#### Application
+Choisissez l'environnement **env:routeur_solaire**
+![Alt text](readme/ota_select.PNG?raw=true "Ota Select")
 
-#### Application  
-Depuis la barre d'action rapide en base de VSCodium : cliquer sur la fleche "PlatformIO: Upload"
+Selectionner l'onglet plateformio dans le menu latérial (la tete de fourmi), puis déplier les options de l'environnement **env:routeur_solaire**
+![Alt text](readme/env_select.PNG?raw=true "Env Select")
+![Alt text](readme/filaire.PNG?raw=true "depliage env")
 
-#### Monitor
-Depuis la barre d'action rapide en base de VSCodium : cliquer sur la fleche "PlatformIO: Serial Monitor"
-Ceci permet de voir les infos et logs de l'ESP (Ip du serveur, mesures prises, publication mqtt ....)
+L'option **Build** compile le projet
+L'option **upload** permet de flasher l'ESP avec le code compiler
+L'option **Monitor** permet de visualiser les logs de l'ESP (infos IP, infos des mesures, ...)
+L'option **upload Filesystem Image** permet d'envoyer les fichiers du serveur web
+
 
 ### PlatformIO OTA
 **/!\\ Une première installation filaire est nécessaire !**
@@ -138,13 +172,20 @@ Dans le fichier plateformio.ini présent à la racine du dossier, il faut rensei
 upload_port=192.168.1.57
 ```
 L'adresse IP de l'ESP est affichée dans les logs, au démarrage de l'ESP (CF section Monitor)
-![Alt text](readme/ip_ota.PNG?raw=true "Ota Select")
+![Alt text](readme/ip_ota.PNG?raw=true "IP OTA")
 
 
 Cliquer sur **Default** puis choisissez **env:routeur_solaire_OTA**
 ![Alt text](readme/ota_select.PNG?raw=true "Ota Select")
 
-Ensuite flasher comme indiqué dans la section précedente
+Selectionner l'onglet plateformio dans le menu latérial (la tete de fourmi), puis déplier les options de l'environnement **env:routeur_solaire_OTA**
+![Alt text](readme/env_select.PNG?raw=true "Env Select")
+![Alt text](readme/ota.PNG?raw=true "depliage env")
+
+Seul les options Build, upload et upload filesystem image sont disponibles
+L'option **Build** compile le projet
+L'option **upload** permet de flasher l'ESP avec le code compiler via OTA
+L'option **upload Filesystem Image** permet d'envoyer les fichiers du serveur web via OTA
 
 ## Developpement
 Pour changer des fonctionnalités, vous pouvez éditer le code.
