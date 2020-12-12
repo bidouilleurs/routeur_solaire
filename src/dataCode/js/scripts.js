@@ -70,6 +70,11 @@ function updateSelectBooleanHidden(idHidden, id) {
 function updateMarcheForceeHidden() {
     document.getElementById('marcheForceePercentageHidden').value = document.getElementById('selectMarcheForcee').value;
 }
+
+function onActifChange() {
+    const checked = document.getElementById('actif').checked;
+    document.getElementById('actifHidden').value = checked;}
+
 function updateBasculementModeHidden() {
     document.getElementById('basculementModeHidden').value = document.getElementById('basculementMode').value;
     update2Sortie();
@@ -199,13 +204,16 @@ function setSummarySettingsContent(settings) {
     let content = '<div class="title-container"><h1 style="text-align: center; margin: auto;">Routeur Solaire Hors Réseau</h1></div>';
     content += "<div style='max-width: 25em;margin: auto;height: calc(100vh - 8em);'>";
     content += "<form id='summaryForm' method='post' action='/summarysettings'>";
+   
     content += "<div class='card card-2'>";
+    const actif = settings["systemSettings"]["actif"]["value"] ? "Oui" : "Non";
+    content = addInput(actif, "Système actif", content, true, '.+', 'actif');
     content = addInputNested({ setting: settings["systemSettings"]["capteurTension"], name: 'capteurTension', content, readonly: true, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
     settings['systemSettings']['intensiteBatterie']['value'] = settings['systemSettings']['intensiteBatterie']['value'].toFixed(2);
     content = addInputNested({ setting: settings["systemSettings"]["intensiteBatterie"], name: 'intensiteBatterie', content, readonly: true, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
     content = addInputNested({ setting: settings["systemSettings"]["sortieActive"], name: "sortieActive", content, readonly: true, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
 
-    const state = settings["userSettings"]["etatRelaisStatique"] ? "Oui" : "Non";
+    const state = settings["systemSettings"]["etatRelaisStatique"]["value"] ? "Oui" : "Non";
     content = addInput(state, "Etat relais statique", content, true, '.+', 'etatRelaisStatique');
 
     content = addInput(Math.round(settings["systemSettings"]["temperatureEauChaude"]["value"]),
@@ -232,6 +240,9 @@ function setSystemSettingsContent(settings) {
     let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Paramètres Généraux</h1></div>';
     content += "<div style='max-width: 25em;margin: auto; height: calc(100vh - 8em);'>";
     content += "<form id='systemForm' method='post' action='/systemsettings'>";
+    content += "<div class='card card-2'>";
+    content = addSwitch(settings["systemSettings"]["actif"], "actif", "onActifChange", content);
+    content += "</div>";
     content += "<div class='card card-2'>";
     content = addInputNested({ setting: settings["userSettings"]["coeffPince"], name: "coeffPince", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
     content = addInputNested({ setting: settings["userSettings"]["zeropince"], name: "zeropince", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });

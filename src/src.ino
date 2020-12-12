@@ -40,10 +40,10 @@ int choixSortie = 0;
 int paramchange = 0;
 bool SAP = false;
 bool MQTT = false;
-bool serverOn = false;
 
 #ifdef Pzem04t
 float Pzem_i = 0;
+
 float Pzem_U = 0;
 float Pzem_P = 0;
 float Pzem_W = 0;
@@ -60,7 +60,9 @@ float Pzem_W = 0;
 #ifdef WifiServer
 #include "modeserveur.h"
 #endif
-
+#ifdef OTA
+#include "ota.h"
+#endif
 #ifdef EEprom
 #include "prgEEprom.h"
 #endif
@@ -86,7 +88,6 @@ float Pzem_W = 0;
 /***************************************/
 void setup()
 {
-
   Serial.begin(115200);
 
   pinMode(pinTriac, OUTPUT);
@@ -109,7 +110,6 @@ void setup()
   RAAfficheur.setup();
 #endif
 
-
 #ifdef EEprom
   RAPrgEEprom.setup();
 #endif
@@ -118,13 +118,17 @@ void setup()
   marcheForcee = false; // mode forcé retirer au démarrage
   marcheForceePercentage = false;
   temporisation = 0;
-  
+
 #ifdef WifiMqtt
   RAMQTT.setup();
 #endif
 
 #ifdef WifiServer
   RAServer.setup(); // activation de la page Web de l'esp
+#endif
+
+#ifdef OTA
+  RAOTA.begin();
 #endif
 
 #ifdef Bluetooth // bluetooth non autorise avec serveur web ou MQTT
@@ -154,16 +158,21 @@ void setup()
 
 int iloop = 0; // pour le parametrage par niveau
 extern int calPuis;
-float mesureAc=0;
+float mesureAc = 0;
 
 void loop()
 {
+#ifdef OTA
+  RAOTA.loop();
+#endif
+
   RATriac.watchdog(1);                  //chien de garde à 4secondes dans timer0
   RAMesure.mesurePinceTension(700, 20); // mesure le courant et la tension avec 2 boucles de filtrage (700,20)
- // mesureAc=RAMesure.mesurePinceAC(pinPotentiometre,1,false);
+                                        // mesureAc=RAMesure.mesurePinceAC(pinPotentiometre,1,false);
 
 #ifdef simulation
-  if (!modeparametrage) RASimulation.imageMesure(0); // permet de faire des essais sans matériel
+  if (!modeparametrage)
+    RASimulation.imageMesure(0); // permet de faire des essais sans matériel
   Serial.print("Mode simulation");
 #endif
 
@@ -173,21 +182,31 @@ void loop()
     RAMesure.mesure_puissance();  // mesure la puissance sur le pzem004t
 
     int dev = RARegulation.mesureDerive(intensiteBatterie, 0.2); // donne 1 si ça dépasse l'encadrement haut et -1 si c'est en dessous de l'encadrement (Pince,0.2)
-    
-    if (mesureAc<0.3)
-              {
-                
-              
-                puissanceGradateur = RARegulation.regulGrad(dev); // calcule l'augmentation ou diminution du courant dans le ballon en fonction de la deviation
-                RARegulation.pilotage(); // pilotage à distance
-              }
 
-               else    { calPuis=0; puissanceGradateur = 0; }
+    if (mesureAc < 0.3)
+    {
+
+      if (routeur.actif)
+      {
+        puissanceGradateur = RARegulation.regulGrad(dev); // calcule l'augmentation ou diminution du courant dans le ballon en fonction de la deviation
+      }
+      else
+      {
+        puissanceGradateur = 0;
+      }
+      RARegulation.pilotage(); // pilotage à distance
+    }
+
+    else
+    {
+      calPuis = 0;
+      puissanceGradateur = 0;
+    }
   }
 
   if (modeparametrage)
   {
-//    int potar = map(analogRead(pinPotentiometre), 0, 4095, 0, 1000); // controle provisoire avec pot
+    //    int potar = map(analogRead(pinPotentiometre), 0, 4095, 0, 1000); // controle provisoire avec pot
     iloop++;
     if (iloop < 10)
       puissanceGradateur = 1;
@@ -203,7 +222,7 @@ void loop()
       puissanceGradateur = 1000;
     else
       iloop = 0;
-  /*   if (potar>10) puissanceGradateur=potar;
+    /*   if (potar>10) puissanceGradateur=potar;
        else  if (potar<2) puissanceGradateur=0;
                     else puissanceGradateur=1; // priorité au potensiometre                    // priorité au potensiometre
     */
@@ -234,8 +253,7 @@ void loop()
   Serial.print(mesureAc);
   Serial.print(',');
   Serial.println(capteurTension / 5);
-//  Serial.print("zero");  Serial.println(routeur.zeropince);
-
+  //  Serial.print("zero");  Serial.println(routeur.zeropince);
 
 #ifdef EcranOled
   RAAfficheur.affichage_oled(); // affichage de lcd
@@ -255,11 +273,11 @@ void loop()
 #endif
 
 #ifdef EEprom
-  
+
   if (resetEsp == 1)
   {
     RATriac.stop_interrupt();
-    RAPrgEEprom.close_param(); 
+    RAPrgEEprom.close_param();
     delay(5000);
   }
 #endif
@@ -267,6 +285,6 @@ void loop()
   if (resetEsp == 1)
   {
     Serial.println("Restart !");
-    ESP.restart(); // redemarrage
+    ESP.restart(); // redemarrage"
   }
 }

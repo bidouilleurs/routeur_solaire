@@ -336,4 +336,14 @@ int RARegulationClass::pilotage()
   }
 }
 
+void RARegulationClass::desactivation()
+{
+  digitalWrite(pinTriac, LOW); // mise à zéro du triac
+  digitalWrite(pinSortie2, LOW); // mise à zéro du triac de la sortie 2
+  digitalWrite(pinRelais, LOW); // mise à zéro du relais statique
+  puissanceGradateur = 0;
+  temporisation = 0;
+  marcheForcee = false;
+}
+
 RARegulationClass RARegulation;

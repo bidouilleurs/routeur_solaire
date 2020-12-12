@@ -10,12 +10,15 @@
 #include <PubSubClient.h>
 #include "WiFi.h"
 #include "afficheur.h"
+#include "prgEEprom.h"
+
 /************ WiFi & MQTT objects  ******************/
 WiFiClient espClient;
 PubSubClient client(espClient);
 int affpub = 0;
 int testconnect = 0; //  permet de savoir si la connection est faite
 int limitConnect = 3;
+int loopWithoutMqtt = 0;
 void RAMQTTClass::connexion()
 {
   testconnect = 0;
@@ -26,23 +29,27 @@ void RAMQTTClass::connexion()
     if (client.connect("ESP32Client", routeur.mqttUser, routeur.mqttPassword))
     {
       Serial.println(F("connection active"));
+      RAMQTT.mqtt_subcribe();
+      loopWithoutMqtt = 0;
     }
     else
     {
       Serial.println(F("Erreur de connection "));
-    }
+
 #ifdef EcranOled
-    RAAfficheur.cls();
-    delay(100);
-    RAAfficheur.affiche(20, "Err Brokeur");
-    RAAfficheur.affiche(35, String(testconnect));
+      RAAfficheur.cls();
+      delay(100);
+      RAAfficheur.affiche(20, "Err Brokeur");
+      RAAfficheur.affiche(35, String(testconnect));
 #endif
-    delay(100);
+      delay(100);
+    }
   }
   if (testconnect >= limitConnect) // connection échouée au broker
   {
     Serial.println(F("Broker Mqtt indisponible"));
     MQTT = false; // pas de connection mqtt
+    loopWithoutMqtt = 0;
   }
 }
 
@@ -65,6 +72,7 @@ void RAMQTTClass::setup()
       MQTT = true;
       client.setServer(routeur.mqttServer, routeur.mqttPort); // connection au broker mqtt
       client.setCallback(callback);
+      client.setBufferSize(500);
       Serial.print(F("le broker est  "));
       Serial.println(routeur.mqttServer);
       RAMQTT.connexion();
@@ -184,6 +192,11 @@ void RAMQTTClass::callback(char *topic, byte *message, unsigned int length)
   {
     RAMQTT.commande_param(messageTemp);
   }
+  else if (String(topic) == "router/activation")
+  {
+    routeur.actif = messageTemp == "1" ? true : false;
+    RAPrgEEprom.sauve_param();
+  }
   // Mqtt_publish(1);
 }
 
@@ -192,21 +205,26 @@ void RAMQTTClass::mqtt_subcribe()
   if (client.connected())
   {
     client.subscribe(routeur.mqttopicInput);
+    client.subscribe("router/activation");
   }
-  client.loop();
 }
 
 void RAMQTTClass::mqtt_publish(int a)
 {
 
   if (a > 0)
+  {
     affpub = 30; // forcage de l'envoie
+  }
   affpub++;
   if (affpub < 20)
+  {
     return;
+  }
   else
+  {
     affpub = 0;
-
+  }
   const int capacity = JSON_OBJECT_SIZE(5); // 5 données maxi dans json
   StaticJsonDocument<capacity> doc;
   char buffer[200];
@@ -233,18 +251,18 @@ void RAMQTTClass::mqtt_publish(int a)
   }
   doc.clear();
 
-  client.loop();
   if (a == 0)
     return;
 
   //   char buffer[150];
   //Exportation des données en trame JSON via MQTT
-  StaticJsonDocument<capacity> doc2;
+  StaticJsonDocument<JSON_OBJECT_SIZE(6)> doc2;
   doc2["zeropince"] = routeur.zeropince;
   doc2["coeffPince"] = routeur.coeffPince;
   doc2["coeffTension"] = routeur.coeffTension;
   doc2["seuilTension"] = routeur.seuilDemarrageBatterie;
   doc2["toleranceNeg"] = routeur.toleranceNegative;
+  doc2["actif"] = routeur.actif;
   n = serializeJson(doc2, buffer); // calcul de la taille du json
   buffer[n - 1] = '}';
   buffer[n] = 0; // fermeture de la chaine json
@@ -309,8 +327,6 @@ void RAMQTTClass::mqtt_publish(int a)
   }
   doc4.clear();
 
-  client.loop();
-
   //  sortie du pzem
 #ifdef Pzem04t
 
@@ -341,46 +357,42 @@ void RAMQTTClass::mqtt_publish(int a)
   doc5.clear();
 
   /********************* fin d'envoie ***********************/
-  client.loop();
 #endif
 }
 
 void RAMQTTClass::loop()
 {
+  if (!MQTT)
+  {
+    loopWithoutMqtt++;
+    if (loopWithoutMqtt > 500)
+    {
+      MQTT = true;
+      loopWithoutMqtt = 0;
+    }
+  }
   if ((!SAP) && (WiFi.status() != WL_CONNECTED))
   {
     resetEsp = 1;
     return;
   }
-  if ((testwifi == 0) && (!SAP) && (!serverOn))
+  if (testwifi == 0 && !SAP)
   {
-    //    if ((WiFi.status() == WL_CONNECTED) && (client.connected()))
     if (WiFi.status() == WL_CONNECTED)
     { // teste le wifi
-      // bool mqttav = MQTT;
       if (!client.connected() && MQTT)
       {
         RAMQTT.connexion();
-      }
-      if (MQTT)
-      {
-        mqtt_subcribe();
       }
 
       // lecture de information sur mqtt output/solar
       //  (1) avec les parametres
       //  (0) seulement les indispensables tension courant ..
-      if (paramchange == 1)
+      client.loop();
+      if (MQTT)
       {
-        if (MQTT)
-          mqtt_publish(1);
+        mqtt_publish(paramchange);
       }
-      else
-      {
-        if (MQTT)
-          mqtt_publish(0); // communication au format mqtt pour le reseau domotique
-      }
-      // MQTT = mqttav;
       paramchange = 0;
     }
     else

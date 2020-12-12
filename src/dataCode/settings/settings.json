@@ -28,6 +28,10 @@
       "etatRelaisStatique" : {
         "label": "Etat du relais statique",
         "value": "Off"
+      },
+      "actif" : {
+        "label": "Activation du système",
+        "value": true
       }
     },
     "userSettings": {

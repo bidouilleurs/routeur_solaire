@@ -5,6 +5,7 @@
 #ifdef WifiServer
 #include "modeserveur.h"
 #include "triac.h"
+#include "regulation.h"
 #include "prgEEprom.h"
 #include "afficheur.h"
 #include <string.h>
@@ -64,7 +65,7 @@ void RAServerClass::setup()
             Serial.println("\n");
             Serial.println("Connexion etablie!");
             Serial.print("Adresse IP: ");
-            Serial.println(WiFi.localIP());
+            Serial.println(WiFi.localIP());""
         }
     }
 #endif
@@ -154,6 +155,10 @@ void RAServerClass::saveSystemSettings(String jsonResult)
     routeur.relaisStatique = doc["relaisStatique"] == "true";
     routeur.seuilMarche = atof(doc["seuilMarche"]);
     routeur.seuilArret = atof(doc["seuilArret"]);
+    routeur.actif = doc["actif"] == "true";
+    if(!routeur.actif){
+        RARegulation.desactivation();
+    }
     restartEsp = doc["needRestart"] == "true" ? 1 : 0;
     doc.clear();
     RAPrgEEprom.sauve_param();
@@ -205,6 +210,7 @@ void RAServerClass::getSettings(WiFiClient client)
     doc["settings"]["systemSettings"]["temperatureEauChaude"]["value"] = temperatureEauChaude;
     doc["settings"]["systemSettings"]["puissanceGradateur"]["value"] = puissanceGradateur / 10;
     doc["settings"]["systemSettings"]["etatRelaisStatique"]["value"] = etatRelaisStatique;
+    doc["settings"]["systemSettings"]["actif"]["value"] = routeur.actif;
 
     doc["settings"]["communicationSettings"]["mqttServer"] = routeur.mqttServer;
     doc["settings"]["communicationSettings"]["mqttPort"] = routeur.mqttPort;
@@ -333,6 +339,7 @@ void RAServerClass::loop()
                 {
                     RAPrgEEprom.reset();
                 }
+                paramchange = 1;
                 client.println("HTTP/1.1 204 OK");
             }
             else
@@ -405,11 +412,11 @@ void RAServerClass::loop()
     {
         pause_inter = 0;
         RATriac.restart_interrupt();
-        paramchange = 1;
     }
     if ((pause_inter > 20) && (SAP))
     {
         pause_inter = 0;
+        paramchange = 0;
         RATriac.restart_interrupt();
     }
 }

@@ -81,7 +81,7 @@ void IRAM_ATTR RATriacClass::stop_interrupt()
 
 void IRAM_ATTR RATriacClass::restart_interrupt()
 {
-  if (interrupt_on)
+  if (interrupt_on || !routeur.actif)
     return;
   attachInterrupt(zeroc, zeroCross, FALLING);
   interrupt_on = true;
@@ -89,7 +89,7 @@ void IRAM_ATTR RATriacClass::restart_interrupt()
 
 void RATriacClass::start_interrupt()
 {
-  if (interrupt_on)
+  if (interrupt_on || !routeur.actif)
     return;
   timer = timerBegin(0, 80, true);                // timer de déclenchement triac
   timerAttachInterrupt(timer, &pulseTriac, true); // renvoi vers

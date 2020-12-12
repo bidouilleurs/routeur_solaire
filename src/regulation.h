@@ -15,6 +15,7 @@ public:
   /******** Pilotage exterieur*******/
   /**************************************/
   int pilotage();
+  void desactivation();
 };
 extern RARegulationClass RARegulation;
 #endif
