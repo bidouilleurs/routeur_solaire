@@ -11,6 +11,7 @@
 #include "WiFi.h"
 #include "afficheur.h"
 #include "prgEEprom.h"
+#include "triac.h"
 
 /************ WiFi & MQTT objects  ******************/
 WiFiClient espClient;
@@ -19,6 +20,8 @@ int affpub = 0;
 int testconnect = 0; //  permet de savoir si la connection est faite
 int limitConnect = 3;
 int loopWithoutMqtt = 0;
+const char *versionsoft;
+
 void RAMQTTClass::connexion()
 {
   testconnect = 0;
@@ -53,9 +56,9 @@ void RAMQTTClass::connexion()
   }
 }
 
-void RAMQTTClass::setup()
+void RAMQTTClass::setup(const char *version_soft)
 {
-
+  versionsoft = version_soft;
   if (!SAP)
   {
     WiFi.begin(routeur.ssid, routeur.password); // connection au reseau 20 tentatives autorisées
@@ -172,6 +175,13 @@ void RAMQTTClass::commande_param(String mesg)
     int com = mesg.substring(3).toInt();
     temporisation = com;
   }
+#ifndef MesureTemperature
+  if (mesg.substring(0, 3).equals("tem")) // reception ex: "tem60" 60 minute de marche forcée
+  {
+    int com = mesg.substring(3).toInt();
+    temperatureEauChaude = com;
+  }
+#endif
   paramchange = 1;
 }
 void RAMQTTClass::callback(char *topic, byte *message, unsigned int length)
@@ -195,9 +205,17 @@ void RAMQTTClass::callback(char *topic, byte *message, unsigned int length)
   else if (String(topic) == "router/activation")
   {
     routeur.actif = messageTemp == "1" ? true : false;
-    RAPrgEEprom.sauve_param();
+    if (routeur.actif)
+    {
+      RAPrgEEprom.sauve_param();
+      RATriac.start_interrupt();
+    }
+    else
+    {
+      RATriac.stop_interrupt();
+      RAPrgEEprom.sauve_param();
+    }
   }
-  // Mqtt_publish(1);
 }
 
 void RAMQTTClass::mqtt_subcribe()
@@ -226,7 +244,7 @@ void RAMQTTClass::mqtt_publish(int a)
     affpub = 0;
   }
   const int capacity = JSON_OBJECT_SIZE(5); // 5 données maxi dans json
-  StaticJsonDocument<capacity> doc;
+  StaticJsonDocument<JSON_OBJECT_SIZE(6)> doc;
   char buffer[200];
   //Exportation des données en trame JSON via MQTT
   doc["Intensite"] = intensiteBatterie;
@@ -234,6 +252,7 @@ void RAMQTTClass::mqtt_publish(int a)
   doc["Gradateur"] = puissanceGradateur;
   doc["Temperature"] = temperatureEauChaude;
   doc["puissanceMono"] = puissanceDeChauffe;
+  doc["version"] = versionsoft;
   size_t n = serializeJson(doc, buffer); // calcul de la taille du json
   buffer[n - 1] = '}';
   buffer[n] = 0; // fermeture de la chaine json

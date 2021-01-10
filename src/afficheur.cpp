@@ -89,9 +89,8 @@ void RAAfficheurClass::affichage_oled()
     display.setFont(ArialMT_Plain_10);
     display.drawString(32, 13 - 13, "I = " + String(intensiteBatterie) + " A  ");
     display.drawString(32, 24 - 13, "U = " + String(capteurTension) + " V  ");
-#ifdef MesureTemperature
     display.drawString(32, 35 - 13, "T = " + String(temperatureEauChaude) + " °C  ");
-#endif
+
     /*
     // affichage à l'envers
     display.drawProgressBar(35, 50, 60, 10, abs(puissanceGradateur) / 10);

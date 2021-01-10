@@ -10,7 +10,7 @@ class RAServerClass
 {
 
 public:
-    void setup();
+    void setup(const char* version);
     void loop();
     void coupure_reseau();
 

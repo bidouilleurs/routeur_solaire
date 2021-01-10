@@ -230,7 +230,6 @@ int RARegulationClass::pilotage()
   // pilotage du 2eme triac
 
 
-#ifdef MesureTemperature
 #ifdef Sortie2
   if (routeur.utilisation2Sorties)  
   {
@@ -268,7 +267,6 @@ int RARegulationClass::pilotage()
       etatRelaisStatique = false;
     }
   }
-#endif
 
 #ifdef Sortie2
 #ifdef Pzem04t

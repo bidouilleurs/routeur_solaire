@@ -7,7 +7,7 @@
 class RAMQTTClass
 {
 public:
-  void setup();
+  void setup(const char *version_soft);
   void loop();
   void commande_param(String mesg);
 

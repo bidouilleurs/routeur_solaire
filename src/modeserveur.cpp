@@ -24,6 +24,7 @@ IPAddress local_ip(192, 168, 4, 1);
 IPAddress gateway(192, 168, 4, 1);
 IPAddress subnet(255, 255, 255, 0);
 bool restartEsp = false;
+const char *version;
 
 DynamicJsonDocument RAServerClass::readSettingsFile()
 {
@@ -44,9 +45,9 @@ DynamicJsonDocument RAServerClass::readSettingsFile()
     return doc;
 }
 
-void RAServerClass::setup()
+void RAServerClass::setup(const char *version_soft)
 {
-
+    version = version_soft;
 #ifndef WifiMqtt
     int testconnect = 0;
     if (!SAP)
@@ -65,7 +66,7 @@ void RAServerClass::setup()
             Serial.println("\n");
             Serial.println("Connexion etablie!");
             Serial.print("Adresse IP: ");
-            Serial.println(WiFi.localIP());""
+            Serial.println(WiFi.localIP());
         }
     }
 #endif
@@ -156,7 +157,8 @@ void RAServerClass::saveSystemSettings(String jsonResult)
     routeur.seuilMarche = atof(doc["seuilMarche"]);
     routeur.seuilArret = atof(doc["seuilArret"]);
     routeur.actif = doc["actif"] == "true";
-    if(!routeur.actif){
+    if (!routeur.actif)
+    {
         RARegulation.desactivation();
     }
     restartEsp = doc["needRestart"] == "true" ? 1 : 0;
@@ -167,7 +169,7 @@ void RAServerClass::saveSystemSettings(String jsonResult)
 
 void RAServerClass::getNewSettings(WiFiClient client)
 {
-    DynamicJsonDocument doc(500);
+    DynamicJsonDocument doc(600);
     JsonObject settings = doc.createNestedObject("settings");
     settings["capteurTension"] = capteurTension;
     settings["intensiteBatterie"] = intensiteBatterie;
@@ -178,7 +180,9 @@ void RAServerClass::getNewSettings(WiFiClient client)
     settings["temporisation"] = temporisation;
     settings["marcheForcee"] = marcheForcee;
     settings["etatRelaisStatique"] = etatRelaisStatique;
+    settings["actif"] = routeur.actif;
     String result = doc["settings"];
+    doc.clear();
     client.println(result);
 }
 
@@ -211,6 +215,7 @@ void RAServerClass::getSettings(WiFiClient client)
     doc["settings"]["systemSettings"]["puissanceGradateur"]["value"] = puissanceGradateur / 10;
     doc["settings"]["systemSettings"]["etatRelaisStatique"]["value"] = etatRelaisStatique;
     doc["settings"]["systemSettings"]["actif"]["value"] = routeur.actif;
+    doc["settings"]["systemSettings"]["version"]["value"] = version;
 
     doc["settings"]["communicationSettings"]["mqttServer"] = routeur.mqttServer;
     doc["settings"]["communicationSettings"]["mqttPort"] = routeur.mqttPort;
@@ -344,7 +349,10 @@ void RAServerClass::loop()
             }
             else
             {
+                                     Serial.println("stop_interrupt start");
+
                 RATriac.stop_interrupt();
+                     Serial.println("stop_interrupt done");
                 pause_inter = 1;
 
                 if (req.startsWith("GET /settings"))

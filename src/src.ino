@@ -6,7 +6,7 @@
 // un ballon d'eau chaude
 //**************************************************************/
 
-const char *version_soft = "Version 1.3";
+const char *version_soft = "Version 1.4";
 
 //**************************************************************/
 // Initialisation
@@ -120,11 +120,11 @@ void setup()
   temporisation = 0;
 
 #ifdef WifiMqtt
-  RAMQTT.setup();
+  RAMQTT.setup(version_soft);
 #endif
 
 #ifdef WifiServer
-  RAServer.setup(); // activation de la page Web de l'esp
+  RAServer.setup(version_soft); // activation de la page Web de l'esp
 #endif
 
 #ifdef OTA
@@ -276,6 +276,9 @@ void loop()
 
   if (resetEsp == 1)
   {
+#ifdef WifiMqtt
+    RAMQTT.loop();
+#endif
     RATriac.stop_interrupt();
     RAPrgEEprom.close_param();
     delay(5000);
@@ -284,6 +287,7 @@ void loop()
 
   if (resetEsp == 1)
   {
+
     Serial.println("Restart !");
     ESP.restart(); // redemarrage"
   }

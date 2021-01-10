@@ -73,7 +73,8 @@ function updateMarcheForceeHidden() {
 
 function onActifChange() {
     const checked = document.getElementById('actif').checked;
-    document.getElementById('actifHidden').value = checked;}
+    document.getElementById('actifHidden').value = checked;
+}
 
 function updateBasculementModeHidden() {
     document.getElementById('basculementModeHidden').value = document.getElementById('basculementMode').value;
@@ -201,10 +202,13 @@ function reboot() {
 }
 
 function setSummarySettingsContent(settings) {
-    let content = '<div class="title-container"><h1 style="text-align: center; margin: auto;">Routeur Solaire Hors Réseau</h1></div>';
+    let content = '<div class="title-container"><h1 style="text-align: center; margin: auto;">Routeur Solaire Hors Réseau</h1>';
+    content += '<span>' + settings["systemSettings"]["version"]["value"] +'</span>';
+    content += '</div>' ;
     content += "<div style='max-width: 25em;margin: auto;height: calc(100vh - 8em);'>";
     content += "<form id='summaryForm' method='post' action='/summarysettings'>";
-   
+    content += "<h3 style='margin: 0em 1em 0.5em .8em; font-size: .7rem;text-align: center;'>Rafraichissement toutes les 30s</h3>";
+
     content += "<div class='card card-2'>";
     const actif = settings["systemSettings"]["actif"]["value"] ? "Oui" : "Non";
     content = addInput(actif, "Système actif", content, true, '.+', 'actif');
@@ -237,9 +241,12 @@ function setSummarySettingsContent(settings) {
 }
 
 function setSystemSettingsContent(settings) {
-    let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Paramètres Généraux</h1></div>';
+    let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Paramètres Généraux</h1>';
+    content += '<span>' + settings["systemSettings"]["version"]["value"] +'</span>';
+    content += '</div>' ;
     content += "<div style='max-width: 25em;margin: auto; height: calc(100vh - 8em);'>";
     content += "<form id='systemForm' method='post' action='/systemsettings'>";
+
     content += "<div class='card card-2'>";
     content = addSwitch(settings["systemSettings"]["actif"], "actif", "onActifChange", content);
     content += "</div>";
@@ -279,7 +286,9 @@ function setSystemSettingsContent(settings) {
 }
 
 function setCommunicationSettingsContent(settings) {
-    let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Paramètres de Communication</h1></div>';
+    let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Paramètres de Communication</h1>';
+    content += '<span>' + settings["systemSettings"]["version"]["value"] +'</span>';
+    content += '</div>' ;
     content += "<div style='max-width: 25em;margin: auto; height: calc(100vh - 8em);'>";
 
     content += "<form id='wifiForm' method='post' action='/wifisettings'>";
@@ -315,7 +324,9 @@ function setCommunicationSettingsContent(settings) {
 }
 
 function setActionContent(settings) {
-    let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Action sur l ESP</h1></div>';
+    let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Action sur l ESP</h1>';
+    content += '<span>' + settings["systemSettings"]["version"]["value"] +'</span>';
+    content += '</div>' ;
     content += "<div style='max-width: 25em;margin: auto; height: calc(100vh - 8em);'>";
     content += "<div style='display: flex; flex-direction: column; align-items: flex-end; margin: 1em 0;'>";
     content += "    <button style='width:100%;' class='btn btn-form' onclick='getConfirmation(`Etes vous sur de vouloir redémarrer l ESP ?`, reboot)'><span>Reboot l'ESP</span></button>";
@@ -375,6 +386,7 @@ function updateSystemSettings() {
                     resultSaved["userSettings"]["temporisation"]["value"] = +responseJson["temporisation"];
                     resultSaved["userSettings"]["marcheForcee"]["value"] = +responseJson["marcheForcee"];
                     resultSaved["systemSettings"]["etatRelaisStatique"]["value"] = +responseJson["etatRelaisStatique"];
+                    resultSaved["systemSettings"]["actif"]["value"] = responseJson["actif"];
 
                     sessionStorage.setItem("settings", JSON.stringify(resultSaved));
                     if (document.getElementById('capteurTension')) {
@@ -388,6 +400,14 @@ function updateSystemSettings() {
                         document.getElementById("marcheForcee").value = responseJson["marcheForcee"];
                         const state = responseJson["etatRelaisStatique"] ? "Oui" : "Non";
                         document.getElementById("etatRelaisStatique").value = state;
+                        const actif =responseJson["actif"]? "Oui" : "Non";
+                        document.getElementById("actif").value = actif;
+
+                    }
+
+                    if (document.getElementById("actifHidden")) {
+                        document.getElementById("actif").checked = responseJson["actif"];
+                        document.getElementById("actifHidden").value = responseJson["actif"];
                     }
                 }
             }
@@ -419,4 +439,6 @@ function displayContent() {
         document.getElementById('summaryfooter').style.fontWeight = '700';
         displaySettingsContent(setSummarySettingsContent);
     }
+
+
 }

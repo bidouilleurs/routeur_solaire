@@ -32,6 +32,9 @@
       "actif" : {
         "label": "Activation du système",
         "value": true
+      },
+      "version" : {
+        "value": 1
       }
     },
     "userSettings": {
