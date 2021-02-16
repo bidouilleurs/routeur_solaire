@@ -25,16 +25,24 @@
         "label": "Commande Gradateur (%)",
         "value": 0
       },
-      "etatRelaisStatique" : {
+      "etatRelaisStatique": {
         "label": "Etat du relais statique",
         "value": "Off"
       },
-      "actif" : {
+      "actif": {
         "label": "Activation du système",
         "value": true
       },
-      "version" : {
+      "version": {
         "value": 1
+      },
+      "mesureAc": {
+        "label": "Mesure de Pince AC",
+        "value": 0
+      },
+      "utilisationSAP": {
+        "label": "Utilisation point d'accès uniquement",
+        "value": false
       }
     },
     "userSettings": {
@@ -105,6 +113,18 @@
       "seuilArret": {
         "label": "Seuil Arret",
         "value": 0
+      },
+      "seuilCoupureAC": {
+        "label": "Seuil coupure Pince AC",
+        "value": 0.3
+      },
+      "coeffMesureAc": {
+        "label": "Coefficient de mesure Pince AC",
+        "value": 1
+      },
+      "utilisationPinceAC": {
+        "label": "Utilisation de la pince AC",
+        "value": false
       }
     },
     "communicationSettings": {
@@ -119,7 +139,8 @@
       "mqttopicParam3": "",
       "mqttopicPzem1": "",
       "ssid": "",
-      "password": ""
+      "password": "",
+      "rssi": 0
     }
   }
 }

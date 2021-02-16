@@ -6,7 +6,7 @@
 // un ballon d'eau chaude
 //**************************************************************/
 
-const char *version_soft = "Version 1.4";
+const char *version_soft = "Version 1.5";
 
 //**************************************************************/
 // Initialisation
@@ -22,6 +22,7 @@ const int pinTension = 36;       // GPIO36   capteur tension
 const int pinTemp = 23;          // GPIO23  capteurTempérature
 const int pinSortie2 = 13;       // pin13 pour  2eme "gradateur
 const int pinRelais = 19;        // Pin19 pour sortie relais
+const int pinPinceAC = 39;       // GPIO39 pince AC
 bool marcheForcee = false;
 short int marcheForceePercentage = 25;
 short int sortieActive = 1;
@@ -40,7 +41,7 @@ int choixSortie = 0;
 int paramchange = 0;
 bool SAP = false;
 bool MQTT = false;
-
+char traceurserie[50];
 #ifdef Pzem04t
 float Pzem_i = 0;
 
@@ -53,13 +54,8 @@ float Pzem_W = 0;
 /**********************************************/
 #include "triac.h"
 
-#ifdef WifiMqtt
-#include "modemqtt.h"
-#endif
+#include "communication.h"
 
-#ifdef WifiServer
-#include "modeserveur.h"
-#endif
 #ifdef OTA
 #include "ota.h"
 #endif
@@ -71,10 +67,6 @@ float Pzem_W = 0;
 #include "afficheur.h"
 #endif
 
-#ifdef Bluetooth
-#include "modeBT.h"
-#endif
-
 //#define simulation // utiliser pour faire les essais sans les accessoires
 #ifdef simulation
 #include "simulation.h"
@@ -82,7 +74,9 @@ float Pzem_W = 0;
 
 #include "mesure.h"
 #include "regulation.h"
-
+int iloop = 0; // pour le parametrage par niveau
+extern int calPuis;
+float mesureAc = 0;
 /***************************************/
 /******** Programme principal   ********/
 /***************************************/
@@ -101,10 +95,10 @@ void setup()
   pinMode(pinPotentiometre, INPUT);
   pinMode(pinPince, INPUT);
   pinMode(pinPinceRef, INPUT);
-  Serial.println();
-  Serial.println(F("definition ok "));
-  Serial.println(version_soft);
-  Serial.println();
+  RACommunication.print(1, "", true);
+  RACommunication.print(1, "definition ok ", true);
+  RACommunication.print(1, version_soft, true);
+  RACommunication.print(1, "", true);
 
 #ifdef EcranOled
   RAAfficheur.setup();
@@ -116,23 +110,15 @@ void setup()
 
   delay(500);
   marcheForcee = false; // mode forcé retirer au démarrage
-  marcheForceePercentage = false;
+  marcheForceePercentage = 0;
   temporisation = 0;
 
-#ifdef WifiMqtt
-  RAMQTT.setup(version_soft);
-#endif
-
-#ifdef WifiServer
-  RAServer.setup(version_soft); // activation de la page Web de l'esp
+#if defined WifiMqtt || defined WifiServer
+  RACommunication.setup(version_soft);
 #endif
 
 #ifdef OTA
   RAOTA.begin();
-#endif
-
-#ifdef Bluetooth // bluetooth non autorise avec serveur web ou MQTT
-  RABluetooth.setup();
 #endif
 
 #ifdef EcranOled
@@ -156,10 +142,6 @@ void setup()
   RATriac.start_interrupt(); // demarre l'interruption de zerocrossing et du timer pour la gestion du triac
 }
 
-int iloop = 0; // pour le parametrage par niveau
-extern int calPuis;
-float mesureAc = 0;
-
 void loop()
 {
 #ifdef OTA
@@ -168,12 +150,15 @@ void loop()
 
   RATriac.watchdog(1);                  //chien de garde à 4secondes dans timer0
   RAMesure.mesurePinceTension(700, 20); // mesure le courant et la tension avec 2 boucles de filtrage (700,20)
-                                        // mesureAc=RAMesure.mesurePinceAC(pinPotentiometre,1,false);
+  if (routeur.utilisationPinceAC)
+  {
+    mesureAc = RAMesure.mesurePinceAC(pinPinceAC, routeur.coeffMesureAc, false);
+  }
 
 #ifdef simulation
   if (!modeparametrage)
     RASimulation.imageMesure(0); // permet de faire des essais sans matériel
-  Serial.print("Mode simulation");
+  RACommunication.print(1, "Mode simulation", true);
 #endif
 
   if (!modeparametrage)
@@ -183,7 +168,7 @@ void loop()
 
     int dev = RARegulation.mesureDerive(intensiteBatterie, 0.2); // donne 1 si ça dépasse l'encadrement haut et -1 si c'est en dessous de l'encadrement (Pince,0.2)
 
-    if (mesureAc < 0.3)
+    if (mesureAc < routeur.seuilCoupureAC)
     {
 
       if (routeur.actif)
@@ -223,62 +208,42 @@ void loop()
     else
       iloop = 0;
     /*   if (potar>10) puissanceGradateur=potar;
-       else  if (potar<2) puissanceGradateur=0;
-                    else puissanceGradateur=1; // priorité au potensiometre                    // priorité au potensiometre
-    */
-    Serial.println();
-    Serial.print("Courant ");
-    Serial.println(intensiteBatterie);
-    Serial.print("tension ");
-    Serial.println(capteurTension);
-    Serial.print("Gradateur ");
-    Serial.println(puissanceGradateur);
-    Serial.println();
+         else  if (potar<2) puissanceGradateur=0;
+                      else puissanceGradateur=1; // priorité au potensiometre                    // priorité au potensiometre
+      */
+    char paramLog[50];
+    sprintf(paramLog, "Courant %2.2f, Tension %2.2f, Gradateur %d", intensiteBatterie, capteurTension, puissanceGradateur);
+    RACommunication.print(1, paramLog, true);
+
     delay(200);
   }
 
   // affichage traceur serie
   float c = puissanceGradateur;
-  Serial.print(" ");
-  Serial.print(c / 100);
-  Serial.print(',');
-  Serial.print(devlente * 2);
-  Serial.print(',');
-  Serial.print(intensiteBatterie);
-  Serial.print(',');
-  Serial.print(routeur.seuilDemarrageBatterie / 5);
-  Serial.print(',');
-  Serial.print(-routeur.toleranceNegative);
-  Serial.print(',');
-  Serial.print(mesureAc);
-  Serial.print(',');
-  Serial.println(capteurTension / 5);
+
+  sprintf(traceurserie, "%2.2f,%d,%2.2f,%2.2f,%2.2f,%2.2f,%2.2f",
+          c / 100,
+          devlente * 2,
+          intensiteBatterie,
+          routeur.seuilDemarrageBatterie / 5,
+          -routeur.toleranceNegative,
+          mesureAc,
+          capteurTension / 5);
+  RACommunication.print(1, traceurserie, true);
   //  Serial.print("zero");  Serial.println(routeur.zeropince);
 
 #ifdef EcranOled
   RAAfficheur.affichage_oled(); // affichage de lcd
 #endif
 
-#ifdef WifiMqtt
-  RAMQTT.loop();
-#endif
-
-#ifdef WifiServer
-  RAServer.loop();
-  RAServer.coupure_reseau();
-#endif
-
-#ifdef Bluetooth
-  RABluetooth.read_bluetooth();
+#if defined WifiMqtt || defined WifiServer
+  RACommunication.loop();
 #endif
 
 #ifdef EEprom
 
   if (resetEsp == 1)
   {
-#ifdef WifiMqtt
-    RAMQTT.loop();
-#endif
     RATriac.stop_interrupt();
     RAPrgEEprom.close_param();
     delay(5000);
@@ -288,7 +253,7 @@ void loop()
   if (resetEsp == 1)
   {
 
-    Serial.println("Restart !");
+    RACommunication.print(1, "Restart !", true);
     ESP.restart(); // redemarrage"
   }
 }

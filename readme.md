@@ -27,6 +27,10 @@ Démonstration
 
 [![Alt text](https://img.youtube.com/vi/PUMbBfnpi2k/0.jpg)](https://www.youtube.com/watch?v=PUMbBfnpi2k)
 
+Envoyer le programme sur l'esp
+
+[![Alt text]((https://img.youtube.com/vi/kEmMACQ/0.jpg)](https://www.youtube.com/watch?v=kEmMACQ)
+
 Présentation du serveur web
 
 [![Alt text](https://img.youtube.com/vi/cQqW8xrT0VU/0.jpg)](https://www.youtube.com/watch?v=cQqW8xrT0VU)
@@ -62,6 +66,9 @@ Explication de corrections mineures
 | correctionTemperature  |   settings.h    | -2.3 | |
 | basculementMode  |   settings.h   | "T" |  Choix du mode de basculement : T->température, P-> Puissance zero|
 | actif  |   settings.h   | true | permet d'activer ou désactiver le système
+| utilisationPinceAC  |   settings.h   | true | Utilisation d'une Pince pour la mesure AC
+| seuilCoupureAC  |   settings.h   | 0.3 | Seuil de coupure pour la pince AC
+| coeffMesureAc  |   settings.h   | 0.321 | Coeff de mesure de la pince AC
 
 ### Fonctionnalites optionnelles du systeme
 Les champs décrits ci-dessous permettent d'activer/désactiver certaines options
@@ -82,10 +89,12 @@ Pour **ne pas** activer l'option
 | Pzem04t      |       utilise un pzem004 pour la mesure de puissance dans le ballon  |
 | Sortie2      |       Indique la connexion d'un deuxième Triac  |
 | WifiMqtt      |       Permet la connexion Mqtt sur un serveur : récupération et envoie de données pour de la supervision  |
+| Ecran_inverse | Permet d'inverser l'écran
 | WifiServer      |     Met à disposition une page web pour visualiser les données du systèmes et modifier les valeurs de l'algorithme |
 | EcranOled      |     Affichage de certaines infos sur un afficheur Oled |
 | Simulation      |     Simulation de données pour des tests, dans le cas ou le système n'est pas branché |
 | OTA      |    Permet la mise à jour par OTA (over the air) |
+
 
 ### Parametrage le fonctionnement du serveur web
 Le serveur web permet de faire les régalges depuis une page web. Pour cela, Deux possibités son disponible :
@@ -111,28 +120,30 @@ Une connexion au wifi est obligatoire (cf. Serveur web)
 | mqttPort  |   settings.h    |  1883 | port du serveur mqtt |
 | mqttUser  |   settings.h    |  "" | utilisateur mqtt si nécessaire |
 | mqttPassword  |   settings.h    |  "" | mot "de passe mqtt si nécessaire |
-| mqttopic  |   settings.h    | "sensor/solar"  | Récupération Intensite-Tension-Gradateur-Temperature-puissanceMono |
+| mqttopic  |   settings.h    | "sensor/solar"  | Récupération Intensite-Tension-Gradateur-Temperature-puissanceMono-rssi |
 | mqttopicInput  |   settings.h    |  "output/solar" | *Pilotage à distance, voir le chapitre de pilotage* |
 | mqttopicParam1  |   settings.h    |  "param/solar1" | Récupération zeropince-coeffPince-coeffTension-seuilTension-toleranceNeg-actif|
 | mqttopicParam2  |   settings.h    |   "param/solar2" |Récupération sortie2-sortie2_tempHaut-sortie2_tempBas-temporisation-sortieActive |
-| mqttopicParam3  |   settings.h    | "param/solar3"  | Récupération sortieRelaisTemp-sortieRelaisTens-relaisMax-relaisMin-Forcage_1h|
+| mqttopicParam3  |   settings.h    | "param/solar3"  | Récupération sortieRelaisTemp-sortieRelaisTens-relaisMax-relaisMin-Forcage_1h-version-seuilCoupureAC-coeffMesureAc|
 | mqttopicPzem1  |   settings.h    |  "sensor/Pzem1" | Récupération pzem infos : Intensite-Tension-Puissance-Energie-Cosf|
 
-Pour piloter l'ESP à distance, il est possible d'envoyer des infos via mqt, sur le topic **mqttopicInput**
+Pour piloter l'ESP à distance, il est possible d'envoyer des infos via mqt, sur le topic défini via la variable **mqttopicInput** (par défaut = output/solar)
 | message      |    description |
 | ------------- | ---------:|
 | rst  |  reboot l'esp
 | batX  |  Changement du seuil de démarrage batterie par la valeur X (X est un nombre, ex: bat51)
 | negX  |  Changement de la tolérance négative par la valeur X (X est un nombre, ex: neg0.6)
-| sthX  |  Changement du seuil de température haute par la valeur X (X est un nombre, ex: stb51)
+| sthX  |  Changement du seuil de température haute par la valeur X (X est un nombre, ex: sth51)
 | stbX  |  Changement du seuil de température basse par la valeur X (X est un nombre, ex: stb51)
-| rthX  |  Changement du relais tension haut par la valeur X (X est un nombre, ex: stb51)
-| rtbX  |  Changement du relais tension bas par la valeur X (X est un nombre, ex: stb51)
+| rthX  |  Changement du relais tension haut par la valeur X (X est un nombre, ex: rth51)
+| rtbX  |  Changement du relais tension bas par la valeur X (X est un nombre, ex: rtb51)
 | sorX  |  Changement de la réception de sortie pour la commande du 2eme gradateur (X=0 ou X=1)
 | cmfX  |  Changement de la marche forcée - 1 pour l'activer, 0 pour l'arreter (X=0 ou X=1)
 | rmfX  |  Changement du ratio de la marche force, en % (ex : rfm25)
 | tmpX  |  Changement du temps de la marche forcée, en minutes (ex: tmp60)
 | relX  |  Changement du relais statique X=0 pour désactiver le relais, X=1 pour activer en mode températuren, X=2 pour activer en mode tension
+| tmpX  |  Temps de la marche forcée. X minutes.
+| temX  |  indique que le ballon est a X degrés. Uniquement dans le cas ou la propriété MesureTemperature n'est pas activée dans le settings
 
 Pour activer / désactiver le routeur complétement, il faut envoyer un message sur le topic **router/activation**
 * 1 pour activer

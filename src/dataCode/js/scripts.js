@@ -11,7 +11,8 @@ function addInputNested(infos) {
     if (infos.min && infos.max) {
         bornes = ' min="' + infos.min + '" max="' + infos.max + '" ';
     }
-    infos.content += "<div class='group'>";
+    const display = infos.hidden ? 'none' : 'block';
+    infos.content += "<div class='group' style='display:" + display + "'>";
     infos.content += "   <input step='0.000001' type='" + type + "' pattern='" + infos.pattern + "' value='" +
         (value !== undefined ? value : '') + "' name='" + infos.name + "' id='" + infos.name + "' " + (infos.readonly ? 'readonly' : '') + bornes + ">";
     infos.content += "    <span class='highlight'></span>";
@@ -49,6 +50,14 @@ function update2Sortie() {
     document.getElementById('utilisation2SortiesHidden').value = checked;
 }
 
+function updateUtilisationPinceAC() {
+    const checked = document.getElementById('utilisationPinceAC').checked;
+    document.getElementById('utilisationPinceACHidden').value = checked;
+
+    document.getElementById('seuilCoupureAC').parentNode.style.display = checked ? 'block' : 'none';
+    document.getElementById('coeffMesureAc').parentNode.style.display = checked ? 'block' : 'none';
+}
+
 function updateRelaisStatique() {
     const checked = document.getElementById('relaisStatique').checked;
     document.getElementById('relaisStatiqueHidden').value = checked;
@@ -76,6 +85,11 @@ function onActifChange() {
     document.getElementById('actifHidden').value = checked;
 }
 
+function onUtilisationSAPChange() {
+    const checked = document.getElementById('utilisationSAP').checked;
+    document.getElementById('utilisationSAPHidden').value = checked;
+}
+
 function updateBasculementModeHidden() {
     document.getElementById('basculementModeHidden').value = document.getElementById('basculementMode').value;
     update2Sortie();
@@ -85,9 +99,10 @@ function addSelectMarcheForcee(setting, content, disabled) {
     content += "<div class='select'>";
     content += "    <select onchange='updateMarcheForceeHidden()' name='marcheForceePercentageNotHidden' id='selectMarcheForcee' class='select-text'  " + (disabled ? 'disabled' : '') + ">";
     content += "        <option value='' " + (setting.value === '' ? 'selected' : '') + "></option>";
-    content += "        <option value='25' " + (setting.value === 25 ? 'selected' : '') + ">25%</option>";
-    content += "        <option value='50' " + (setting.value === 50 ? 'selected' : '') + ">50%</option>";
-    content += "        <option value='75' " + (setting.value === 75 ? 'selected' : '') + ">75%</option>";
+    content += "        <option value='20' " + (setting.value === 20 ? 'selected' : '') + ">20%</option>";
+    content += "        <option value='40' " + (setting.value === 40 ? 'selected' : '') + ">40%</option>";
+    content += "        <option value='60' " + (setting.value === 60 ? 'selected' : '') + ">60%</option>";
+    content += "        <option value='80' " + (setting.value === 80 ? 'selected' : '') + ">80%</option>";
     content += "        <option value='100' " + (setting.value === 100 ? 'selected' : '') + ">100%</option>";
     content += "    </select>";
     content += "    <span class='select-highlight'></span>";
@@ -150,13 +165,14 @@ function submitSystem(needRestart) {
     const correctionTemperature = document.getElementById('correctionTemperature').checkValidity();
     const seuilDemarrageBatterieValid = document.getElementById('seuilDemarrageBatterie').checkValidity();
     const toleranceNegativeValid = document.getElementById('toleranceNegative').checkValidity();
+    const seuilCoupureACValid = document.getElementById('seuilCoupureAC').checkValidity();
     const temperatureBasculementSortie2 = document.getElementById('temperatureBasculementSortie2').checkValidity();
     const temperatureRetourSortie1 = document.getElementById('temperatureRetourSortie1').checkValidity();
     const seuilMarche = document.getElementById('temperatureRetourSortie1').checkValidity();
     const seuilArret = document.getElementById('seuilArret').checkValidity();
 
     if (coeffPince && zeropince && coeffTension && correctionTemperature && seuilDemarrageBatterieValid && toleranceNegativeValid
-        && temperatureBasculementSortie2 && temperatureRetourSortie1 && seuilMarche && seuilArret) {
+        && temperatureBasculementSortie2 && temperatureRetourSortie1 && seuilMarche && seuilArret && seuilCoupureACValid) {
         const idToast = needRestart ? 'toastRestart' : 'toast';
         document.getElementById(idToast).className = 'notif peek';
         document.getElementById(idToast).style.animation = 'none';
@@ -203,8 +219,8 @@ function reboot() {
 
 function setSummarySettingsContent(settings) {
     let content = '<div class="title-container"><h1 style="text-align: center; margin: auto;">Routeur Solaire Hors Réseau</h1>';
-    content += '<span>' + settings["systemSettings"]["version"]["value"] +'</span>';
-    content += '</div>' ;
+    content += '<span>' + settings["systemSettings"]["version"]["value"] + '</span>';
+    content += '</div>';
     content += "<div style='max-width: 25em;margin: auto;height: calc(100vh - 8em);'>";
     content += "<form id='summaryForm' method='post' action='/summarysettings'>";
     content += "<h3 style='margin: 0em 1em 0.5em .8em; font-size: .7rem;text-align: center;'>Rafraichissement toutes les 30s</h3>";
@@ -227,6 +243,12 @@ function setSummarySettingsContent(settings) {
 
     content = addInputNested({ setting: settings["systemSettings"]["puissanceGradateur"], name: "puissanceGradateur", content, readonly: true, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
     content = addInputNested({ setting: settings["userSettings"]["seuilDemarrageBatterie"], name: "seuilDemarrageBatterie", content, readonly: true, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
+    content = addInputNested({
+        setting: settings["systemSettings"]["mesureAc"], name: "mesureAc", content, readonly: true,
+        pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)', type: 'number', hidden: !settings["userSettings"]["utilisationPinceAC"]["value"]
+    });
+
+
     content += "</div>";
     content += "<div class='card card-2'>";
     content = addSwitch(settings["userSettings"]["marcheForcee"], "marcheForcee", "updatePercentageState", content);
@@ -242,8 +264,8 @@ function setSummarySettingsContent(settings) {
 
 function setSystemSettingsContent(settings) {
     let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Paramètres Généraux</h1>';
-    content += '<span>' + settings["systemSettings"]["version"]["value"] +'</span>';
-    content += '</div>' ;
+    content += '<span>' + settings["systemSettings"]["version"]["value"] + '</span>';
+    content += '</div>';
     content += "<div style='max-width: 25em;margin: auto; height: calc(100vh - 8em);'>";
     content += "<form id='systemForm' method='post' action='/systemsettings'>";
 
@@ -271,9 +293,22 @@ function setSystemSettingsContent(settings) {
     content = addRadioButtonRelaisStatique(settings["userSettings"]["tensionOuTemperature"], content);
     content = addInputNested({ setting: settings["userSettings"]["seuilMarche"], name: "seuilMarche", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
     content = addInputNested({ setting: settings["userSettings"]["seuilArret"], name: "seuilArret", content, readonly: false, pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)' });
-    content += "    <input type='hidden' name='needRestart' id='needRestart' value='false'></input>";
-
     content += "</div>";
+
+    content += "<div class='card card-2'>";
+    const hidden = !settings["userSettings"]["utilisationPinceAC"]["value"];
+    content = addSwitch(settings["userSettings"]["utilisationPinceAC"], "utilisationPinceAC", "updateUtilisationPinceAC", content);
+    content = addInputNested({
+        setting: settings["userSettings"]["seuilCoupureAC"], name: "seuilCoupureAC", content, readonly: false,
+        pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)', type: 'number', hidden: hidden
+    });
+    content = addInputNested({
+        setting: settings["userSettings"]["coeffMesureAc"], name: "coeffMesureAc", content, readonly: false,
+        pattern: '-?[0-9]+((,[0-9]+)?|(\.[0-9]+)?)', type: 'number', hidden: hidden
+    });
+    content += "</div>";
+
+    content += "    <input type='hidden' name='needRestart' id='needRestart' value='false'></input>";
 
     content += "<div style='display: flex; flex-direction: column; align-items: flex-end; margin: 1em 0;'>";
     content += "<div style='display: flex;'>";
@@ -287,15 +322,18 @@ function setSystemSettingsContent(settings) {
 
 function setCommunicationSettingsContent(settings) {
     let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Paramètres de Communication</h1>';
-    content += '<span>' + settings["systemSettings"]["version"]["value"] +'</span>';
-    content += '</div>' ;
+    content += '<span>' + settings["systemSettings"]["version"]["value"] + '</span>';
+    content += '</div>';
     content += "<div style='max-width: 25em;margin: auto; height: calc(100vh - 8em);'>";
 
     content += "<form id='wifiForm' method='post' action='/wifisettings'>";
 
     content += "<div class='card card-2'><h2 style='margin: 0em 1em 0.5em .8em;color: #2f409f;font-weight: 700;'>WIFI</h2>";
+    content = addSwitch(settings["systemSettings"]["utilisationSAP"], "utilisationSAP", "onUtilisationSAPChange", content);
     content = addInput(settings["communicationSettings"]["ssid"], "ssid", content, false, '.+', 'ssid');
     content = addInput(settings["communicationSettings"]["password"], "password", content, false, '.+', 'password');
+    content = addInput(settings["communicationSettings"]["rssi"], "rssi", content, true, '.+', 'number');
+
     content += "</div>";
 
     content += "</form>";
@@ -325,8 +363,8 @@ function setCommunicationSettingsContent(settings) {
 
 function setActionContent(settings) {
     let content = '<div class="title-container"><h1 style="text-align: center;margin: auto;">Action sur l ESP</h1>';
-    content += '<span>' + settings["systemSettings"]["version"]["value"] +'</span>';
-    content += '</div>' ;
+    content += '<span>' + settings["systemSettings"]["version"]["value"] + '</span>';
+    content += '</div>';
     content += "<div style='max-width: 25em;margin: auto; height: calc(100vh - 8em);'>";
     content += "<div style='display: flex; flex-direction: column; align-items: flex-end; margin: 1em 0;'>";
     content += "    <button style='width:100%;' class='btn btn-form' onclick='getConfirmation(`Etes vous sur de vouloir redémarrer l ESP ?`, reboot)'><span>Reboot l'ESP</span></button>";
@@ -359,11 +397,33 @@ function displaySettingsContent(callback) {
                 const responseJson = JSON.parse(this.response);
                 sessionStorage.setItem("settings", JSON.stringify(responseJson));
                 callback(responseJson);
+                checkVersion(responseJson);
             }
         };
         xhttp.open("GET", "settings", true);
         xhttp.send();
     }
+}
+
+function checkVersion(settings) {
+    const xhttpVersion = new XMLHttpRequest();
+    xhttpVersion.onreadystatechange = function () {
+        if (this.readyState === 4 && this.status === 200) {
+            const responseJson = JSON.parse(this.response);
+            const lastVersion = responseJson.version;
+            if (lastVersion !== +(settings["systemSettings"]["version"]["value"].split(' ')[1])) {
+                document.getElementById('toastVersion').className = 'notif peek';
+                document.getElementById('toastVersion').style.animation = 'none';
+                setTimeout(function () {
+                    document.getElementById('toastVersion').style.animation = '';
+                }, 5000);
+            }
+        }
+    };
+    xhttpVersion.open("GET", "https://routeursolaire.duckdns.org/routeursolaire/lastversion", true);
+    xhttpVersion.setRequestHeader('Access-Control-Allow-Origin', '*');
+
+    xhttpVersion.send();
 }
 
 function updateSystemSettings() {
@@ -387,6 +447,7 @@ function updateSystemSettings() {
                     resultSaved["userSettings"]["marcheForcee"]["value"] = +responseJson["marcheForcee"];
                     resultSaved["systemSettings"]["etatRelaisStatique"]["value"] = +responseJson["etatRelaisStatique"];
                     resultSaved["systemSettings"]["actif"]["value"] = responseJson["actif"];
+                    resultSaved["systemSettings"]["mesureAc"]["value"] = +responseJson["mesureAc"];
 
                     sessionStorage.setItem("settings", JSON.stringify(resultSaved));
                     if (document.getElementById('capteurTension')) {
@@ -400,9 +461,9 @@ function updateSystemSettings() {
                         document.getElementById("marcheForcee").value = responseJson["marcheForcee"];
                         const state = responseJson["etatRelaisStatique"] ? "Oui" : "Non";
                         document.getElementById("etatRelaisStatique").value = state;
-                        const actif =responseJson["actif"]? "Oui" : "Non";
+                        const actif = responseJson["actif"] ? "Oui" : "Non";
                         document.getElementById("actif").value = actif;
-
+                        document.getElementById("mesureAc").value = +responseJson["mesureAc"];
                     }
 
                     if (document.getElementById("actifHidden")) {
@@ -426,9 +487,6 @@ function displayContent() {
     if (window.location.href.endsWith('system')) {
         document.getElementById('systemfooter').style.fontWeight = '700';
         displaySettingsContent(setSystemSettingsContent);
-    } else if (window.location.href.endsWith('chart')) {
-        document.getElementById('chartfooter').style.fontWeight = '700';
-        displaySettingsContent(setSummarySettingsContent);
     } else if (window.location.href.endsWith('communication')) {
         document.getElementById('communicationfooter').style.fontWeight = '700';
         displaySettingsContent(setCommunicationSettingsContent);

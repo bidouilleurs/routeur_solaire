@@ -5,6 +5,7 @@
 #include "triac.h"
 #include "WiFi.h"
 #include <SPIFFS.h>
+#include "communication.h"
 unsigned long otaMillis;
 
 void RAOTAClass::begin()
@@ -63,8 +64,12 @@ void RAOTAClass::begin()
         });
 
         ArduinoOTA.begin();
-        Serial.print("Adresse IP sur le réseau (info pour l'OTA) : ");
-        Serial.println(WiFi.localIP());
+        RACommunication.print(1, "Adresse IP sur le réseau (info pour l'OTA) : ", false);
+        RACommunication.print(1, WiFi.localIP().toString().c_str(), true);
+        RACommunication.print(1, "RSSI : ", false);
+        char rssi[5];
+        sprintf(rssi, "%d", WiFi.RSSI());
+        RACommunication.print(1, rssi, true);
     }
 }
 

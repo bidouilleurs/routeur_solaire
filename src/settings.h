@@ -11,14 +11,14 @@
 #define WifiServer        // affiche les mesures dans une page html crée un point d'accès si pas de reseau
 #define WifiMqtt          // mettre en commentaire si pas de réseau       installer librairie ArduinoJson et PubSubClient
 #define OTA               // permet la mise à jour par OTA (over the air)
-//#define WifiSAPServeur // autorise le point d'accès si pas de reseau
+// #define Ecran_inverse
 
 //**** options MAXI  ****
 #define Pzem04t // utilise un pzem004 pour la mesure de puissance dans le ballon  inclure  https://github.com/mandulaj/PZEM-004T-v30
 #define Sortie2 // utilise un 2eme triac
 #define F50HZ   // Frequence du reseau 50Hz ou 60Hz non testé
-//#define Bluetooth             // autorise les applications smartphone
 
+const int VERBOSE = 1; // 0 pour rien , 1 pour info traceur serie, 2 pour error, 3 pour debug
 struct param
 {
   float zeropince = -20.84;                 // valeur mesurer à zéro (2) 2819 2818.5
@@ -33,8 +33,8 @@ struct param
   float seuilMarche = 50;                   // température ou tension de déclenchement du relais
   float seuilArret = 45;                    // température ou tension de déclenchement du relais
   char tensionOuTemperature[2] = "V";       // Indique si le seuil est en Volts ou en Degrés
-  char ssid[30] = "Livebox-xxxx";           // ssid de la box internet
-  char password[50] = "5AFEDD2C93DC9D";     // mot de passe
+  char ssid[30] = "Bbox-xxxxxxx";           // ssid de la box internet
+  char password[50] = "6557D4EFxxxxxxxx";     // mot de passe
                                             // en mode serveur l'ip est 192.168.4.1'
                                             // ssid , "routeur_esp32"
                                             // password , "adminesp32"
@@ -51,9 +51,13 @@ struct param
   float correctionTemperature = -2.3;
   char basculementMode[2] = "T"; // Choix du mode de basculement : T->température, P-> Puissance zero
   bool actif = true;
+  float seuilCoupureAC = 0.3;      // Seuil de coupure pour la pince AC
+  float coeffMesureAc = 0.321;     // Coeff de mesure de la pince AC
+  bool utilisationPinceAC = false; // Utilisation d'une Pince pour la mesure AC
+  bool utilisationSAP = false;     // Utilisation du SAP uniquement
 };
 extern struct param routeur; //  regroupe tous les parametres de configuration
-
+extern float mesureAc;
 extern bool marcheForcee; // validation de la sortie marche forcée
 extern short int marcheForceePercentage;
 extern short int sortieActive;      // affichage triac actif par défaut le 1er
@@ -84,14 +88,11 @@ extern const int pinTension;
 extern const int pinTemp;
 extern const int pinSortie2;
 extern const int pinRelais;
+extern const int pinPinceAC;
 extern bool wifiSAP;
 
 #define RXD2 18 // Pin pour le Pzem v3.0 //18
-#define TXD2 17 //17
-
-#ifdef WifiSAPServeur
-#define WifiServer
-#endif
+#define TXD2 17 //17"
 
 #ifdef WifiMqtt
 #define WifiServer

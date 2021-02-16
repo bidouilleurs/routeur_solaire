@@ -1,5 +1,6 @@
 #include "PZEM004Tv30.h"
 #include <stdio.h>
+#include "communication.h"
 
 #define REG_VOLTAGE     0x0000
 #define REG_CURRENT_L   0x0001
@@ -41,10 +42,10 @@ void printBuf(uint8_t* buffer, uint16_t len){
     for(uint16_t i = 0; i < len; i++){
         char temp[6];
         sprintf(temp, "%.2x ", buffer[i]);
-        Serial.print(temp);
+        RACommunication.print(3, temp, false);
 
     }
-    Serial.println();
+    RACommunication.print(1, "", true);
 #endif
 }
 
