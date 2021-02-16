@@ -9,9 +9,12 @@ class RAMesureClass
 public:
   void setup();
   void mesurePinceTension(int jmax, int imax);
-  float mesurePinceAC(int pinPince, float coeff , bool avecsigne);
-   void mesureTemperature();
+  float mesurePinceAC(int pinPince, float coeff, bool avecsigne);
+  void mesureTemperature();
   void mesure_puissance();
+
+private:
+  char tempMesure[10];
 };
 extern RAMesureClass RAMesure;
 #endif

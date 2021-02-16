@@ -9,8 +9,13 @@ class RAAfficheurClass
 public:
   void setup();
   void cls();
-  void affiche(int li, String a);
+  void affiche(int li, const char *a);
   void affichage_oled();
+
+private:
+  char intBattery[15];
+  char tension[15];
+  char tempEau[15];
 };
 
 extern RAAfficheurClass RAAfficheur;

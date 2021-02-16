@@ -12,6 +12,9 @@ public:
   void restore_param();
   void close_param();
   void reset();
+
+private:
+  void setDefaultValue();
 };
 extern RAPrgEEpromClass RAPrgEEprom;
 
