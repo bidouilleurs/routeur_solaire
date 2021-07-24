@@ -47,6 +47,10 @@ Explication de corrections mineures
 
 [![Alt text](https://img.youtube.com/vi/yLEv1khMI3Y/0.jpg)](https://www.youtube.com/watch?v=yLEv1khMI3Y)
 
+Intégration du routeur dans Home Assistant
+
+[![Alt text](https://i.ytimg.com/vi/WDx04PCCuHw/hqdefault.jpg)](https://youtu.be/WDx04PCCuHw)
+
 ## Parametrage
 ### Parametrage pour l algorithme
 | Champs      |    Fichier | default |  description |
