@@ -43,18 +43,18 @@ Ils sont présent dans le fichier settings.h et si l'option ne vous interesse pa
 | SAP  |   src.ino   | false | serveur en point d'accès (en dehors du réseau domestique -> ssid: "routeur_esp32"; password : "adminesp32" |
 
 ### Paramétrage pour le fonctionnement MQTT
-| Champs      |    Fichier |  default |  description |
-| ------------- | :---------: |---------:|
+| Champs      |    Fichier | default |  description |
+| ------------- | :---------: |---------: |---------:|
 | mqttServer  |   settings.h    | "192.168.1.28" | ip du serveur mqtt |
 | mqttPort  |   settings.h    |  1883 | port du serveur mqtt |
 | mqttUser  |   settings.h    |  "" | utilisateur mqtt si nécessaire |
 | mqttPassword  |   settings.h    |  "" | mot "de passe mqtt si nécessaire |
-| mqttopic  |   settings.h    | "sensor/solar"  |  |
-| mqttopicInput  |   settings.h    |  "output/solar" | |
-| mqttopicParam1  |   settings.h    |  "param/solar1" | |
-| mqttopicParam2  |   settings.h    |   "param/solar2" | |
-| mqttopicParam3  |   settings.h    | "param/solar3"  | |
-| mqttopicPzem1  |   settings.h    |  "sensor/Pzem1" | |
+| mqttopic  |   settings.h    | "sensor/solar"  | "" |
+| mqttopicInput  |   settings.h    |  "output/solar" | "" |
+| mqttopicParam1  |   settings.h    |  "param/solar1" | "" |
+| mqttopicParam2  |   settings.h    |   "param/solar2" | "" |
+| mqttopicParam3  |   settings.h    | "param/solar3"  | "" |
+| mqttopicPzem1  |   settings.h    |  "sensor/Pzem1" | "" |
 
 
 ## Flash sur ESP
